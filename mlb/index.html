@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MLB Sim Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23fcfcfb' stroke='%230b0b0b' stroke-width='2'/%3E%3Cpath d='M9 5.5c3.5 3 3.5 18 0 21M23 5.5c-3.5 3-3.5 18 0 21' fill='none' stroke='%23d03b3b' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script>if (window.self !== window.top) document.documentElement.classList.add('embedded');</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="14" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
+          <path d="M9 5.5c3.5 3 3.5 18 0 21M23 5.5c-3.5 3-3.5 18 0 21" fill="none" stroke="#d03b3b" stroke-width="2"/>
+        </svg>
+        <span>MLB Sim <small>Monte Carlo dashboard</small></span>
+      </a>
+      <div class="datenav" aria-label="Date">
+        <button class="btn btn-icon" id="prev-day" aria-label="Previous day"></button>
+        <input class="input num" type="date" id="date-input" aria-label="Date">
+        <button class="btn btn-icon" id="next-day" aria-label="Next day"></button>
+        <button class="btn" id="today">Today</button>
+      </div>
+      <div class="controls">
+        <span class="progress-note" id="progress" aria-live="polite"></span>
+        <label class="sr-only" for="sims">Simulations per game</label>
+        <select class="select num" id="sims" title="Simulations per game">
+          <option value="1000">1,000 sims</option>
+          <option value="5000">5,000 sims</option>
+          <option value="10000" selected>10,000 sims</option>
+          <option value="25000">25,000 sims</option>
+          <option value="50000">50,000 sims</option>
+        </select>
+        <button class="btn btn-primary" id="run-all">Simulate all</button>
+        <button class="btn btn-icon" id="refresh" aria-label="Reload lineups, starters and weather" title="Reload lineups, starters and weather"></button>
+        <button class="btn btn-icon" id="theme" aria-label="Theme: automatic" title="Theme: automatic"></button>
+      </div>
+    </div>
+  </header>
+  <main id="view"></main>
+  <footer class="foot">
+    Data: MLB Stats API, Baseball Savant (Statcast), Open-Meteo. Win probabilities and projections come
+    from Monte Carlo simulation and carry real uncertainty.
+  </footer>
+  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+  <script src="static.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Picks</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f6f6f3; --surface: #ffffff; --surface-2: #efeee9; --ink: #0b0b0b; --ink-2: #4d4c49;
+  --muted: #86847e; --border: rgba(11, 11, 11, 0.09); --border-2: rgba(11, 11, 11, 0.16); --accent: #178f64;
+  --btn-bg: #0b0b0b; --btn-ink: #ffffff; --chip: rgba(11, 11, 11, 0.045);
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 8px 24px rgba(11, 11, 11, 0.06);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0c0c0c; --surface: #171716; --surface-2: #222220; --ink: #f5f5f2; --ink-2: #c3c2b7;
+    --muted: #8d8b84; --border: rgba(255, 255, 255, 0.08); --border-2: rgba(255, 255, 255, 0.16); --accent: #2bb884;
+    --btn-bg: #f5f5f2; --btn-ink: #171716; --chip: rgba(255, 255, 255, 0.06);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0c0c0c; --surface: #171716; --surface-2: #222220; --ink: #f5f5f2; --ink-2: #c3c2b7;
+  --muted: #8d8b84; --border: rgba(255, 255, 255, 0.08); --border-2: rgba(255, 255, 255, 0.16); --accent: #2bb884;
+  --btn-bg: #f5f5f2; --btn-ink: #171716; --chip: rgba(255, 255, 255, 0.06);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 22px 16px 48px; }
+h1 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; margin: 0; }
+.lede { color: var(--ink-2); margin: 6px 0 18px; font-size: 14px; max-width: 70ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.card header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.card h2 { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; flex: 1; }
+.when { color: var(--muted); font-size: 12.5px; }
+button { font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--border-2); border-radius: 9px; cursor: pointer;
+  padding: 6px 12px; background: transparent; color: var(--ink); }
+button:hover { background: var(--chip); }
+.body { padding: 6px 14px 14px; }
+.line { padding: 5px 0; font-size: 14px; }
+.line.head { font-weight: 700; font-size: 14.5px; padding-top: 12px; }
+.line.head:first-child { padding-top: 6px; }
+.line.item { padding-left: 2px; color: var(--ink); border-bottom: 1px solid var(--border); }
+.line.note { color: var(--muted); font-size: 12.5px; }
+.gap { height: 4px; }
+.empty { padding: 18px 14px; color: var(--muted); }
+@media (max-width: 720px) { .wrap { padding: 16px 12px 40px; } h1 { font-size: 22px; } .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Picks</h1>
+  <p class="lede">The NFL picks the daily run makes before kickoff, and how they've done, ready to paste into a group
+    chat. Chances are the model's; fair odds are what those chances are worth with no book margin, so a leg is only
+    worth playing where the book pays more.</p>
+  <div class="grid">
+    <section class="card">
+      <header><h2>Latest picks</h2><span class="when" id="when-picks"></span><button data-copy="picks">Copy</button></header>
+      <div class="body" id="picks"><div class="empty">Loading…</div></div>
+    </section>
+    <section class="card">
+      <header><h2>Latest results</h2><span class="when" id="when-results"></span><button data-copy="results">Copy</button></header>
+      <div class="body" id="results"><div class="empty">Loading…</div></div>
+    </section>
+  </div>
+</div>
+<script>
+(() => {
+  const raw = {};
+  const clean = t => t.replace(/^\(copy of this in .*\)\s*$/gm, '').trim();
+  // A header is a line that opens with an emoji or is in capitals; bullets are items; the rest notes.
+  const kind = line => {
+    const t = line.trim();
+    if (!t) return 'gap';
+    if (/^\S+\s+(?:\d+-LEG\s+)?[A-Z]{4,}/u.test(t)) return 'head';     // "✅ SINGLES", "❌ 3-LEG PARLAY"
+    if (/^[•\-–]/.test(t) || /^[✅❌➖⏳]/.test(t)) return 'item';
+    if (/^\p{Extended_Pictographic}/u.test(t) || (t === t.toUpperCase() && /[A-Z]/.test(t))) return 'head';
+    return 'note';
+  };
+  async function load(id, file) {
+    const box = document.getElementById(id);
+    try {
+      const r = await fetch(`picks/${file}`, { cache: 'no-cache' });
+      if (!r.ok) throw new Error(r.status);
+      const text = clean(await r.text());
+      raw[id] = text;
+      box.replaceChildren();
+      if (!text) throw new Error('empty');
+      for (const line of text.split('\n')) {
+        const k = kind(line);
+        const div = document.createElement('div');
+        div.className = k === 'gap' ? 'gap' : `line ${k}`;
+        div.textContent = k === 'item' ? line.trim().replace(/^[•\-–]\s*/, '') : line.trim();
+        box.append(div);
+      }
+      const when = r.headers.get('Last-Modified');
+      if (when) document.getElementById(`when-${id}`).textContent = new Date(when).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+    } catch (e) {
+      raw[id] = '';
+      box.innerHTML = '<div class="empty">Nothing yet: the daily run writes these on game days.</div>';
+    }
+  }
+  document.querySelectorAll('button[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    const text = raw[b.dataset.copy] || '';
+    try { await navigator.clipboard.writeText(text); b.textContent = 'Copied'; }
+    catch (e) { window.prompt('Copy this:', text); }
+    setTimeout(() => { b.textContent = 'Copy'; }, 1800);
+  }));
+  load('picks', 'picks_latest.txt');
+  load('results', 'results_latest.txt');
+})();
+</script>
+</body>
+</html>

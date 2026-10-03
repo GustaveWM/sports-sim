@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f6f6f3; --surface: #ffffff; --surface-2: #efeee9; --ink: #0b0b0b; --ink-2: #4d4c49;
+  --muted: #86847e; --border: rgba(11, 11, 11, 0.09); --border-2: rgba(11, 11, 11, 0.16);
+  --accent: #178f64; --good: #0f8a2e; --bad: #c93636; --good-soft: rgba(15, 138, 46, 0.12); --bad-soft: rgba(201, 54, 54, 0.12);
+  --chip: rgba(11, 11, 11, 0.045); --shadow: 0 1px 2px rgba(11,11,11,.04), 0 8px 24px rgba(11,11,11,.06);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0c0c0c; --surface: #171716; --surface-2: #222220; --ink: #f5f5f2; --ink-2: #c3c2b7;
+    --muted: #8d8b84; --border: rgba(255,255,255,.08); --border-2: rgba(255,255,255,.16);
+    --accent: #2bb884; --good: #3ccf6b; --bad: #ef6b6b; --good-soft: rgba(60,207,107,.13); --bad-soft: rgba(239,107,107,.13);
+    --chip: rgba(255,255,255,.06); --shadow: 0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0c0c0c; --surface: #171716; --surface-2: #222220; --ink: #f5f5f2; --ink-2: #c3c2b7;
+  --muted: #8d8b84; --border: rgba(255,255,255,.08); --border-2: rgba(255,255,255,.16);
+  --accent: #2bb884; --good: #3ccf6b; --bad: #ef6b6b; --good-soft: rgba(60,207,107,.13); --bad-soft: rgba(239,107,107,.13);
+  --chip: rgba(255,255,255,.06);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 22px 16px 48px; }
+h1 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; margin: 0; }
+.lede { color: var(--ink-2); margin: 6px 0 18px; font-size: 14px; max-width: 76ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.summary { padding: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.summary .n { font-size: 24px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.summary .l { color: var(--muted); font-size: 12.5px; }
+.scroll { overflow-x: auto; }
+table { width: 100%; min-width: 560px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 13.5px; white-space: nowrap; }
+th { font-size: 11.5px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+tbody tr:last-child td { border-bottom: 0; }
+.name { font-weight: 600; }
+.about { display: block; color: var(--muted); font-size: 11.5px; font-weight: 400; }
+.good { color: var(--good); } .bad { color: var(--bad); } .dim { color: var(--muted); }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin: 22px 2px 10px; }
+.bar h2 { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; flex: 1; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 13px; font-weight: 600;
+  padding: 5px 11px; border-radius: 8px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
+.tickets { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.ticket header { display: flex; align-items: center; gap: 8px; padding: 11px 13px 0; }
+.ticket h3 { margin: 0; flex: 1; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.state { font-size: 11px; font-weight: 800; letter-spacing: .05em; padding: 3px 8px; border-radius: 6px; }
+.state.won { background: var(--good-soft); color: var(--good); }
+.state.lost { background: var(--bad-soft); color: var(--bad); }
+.state.pending, .state.push, .state.void { background: var(--chip); color: var(--ink-2); }
+.sum { padding: 4px 13px 10px; display: flex; gap: 10px; align-items: baseline; border-bottom: 1px solid var(--border); }
+.sum .big { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sum .meta { color: var(--muted); font-size: 12.5px; }
+ul { list-style: none; margin: 0; padding: 6px 13px 12px; }
+li { padding: 6px 0; border-bottom: 1px dashed var(--border); font-size: 13.5px; }
+li:last-child { border-bottom: 0; }
+li .sub { display: block; color: var(--muted); font-size: 11.5px; }
+.foot { color: var(--ink-2); font-size: 13px; line-height: 1.5; margin-top: 20px; max-width: 82ch; }
+.empty { padding: 26px 18px; color: var(--ink-2); text-align: center; }
+@media (max-width: 720px) {
+  .wrap { padding: 16px 12px 40px; } h1 { font-size: 22px; }
+  .tickets { grid-template-columns: 1fr; }
+  table { font-size: 12.5px; } th, td { padding: 7px 6px; }
+  .hide-sm { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Lab</h1>
+  <p class="lede">A standing experiment, not a tip sheet. Every slate the machine writes down a few parlays to each
+    recipe below, before the games start, and grades them afterwards. Nothing is ever edited once written, so the
+    record is honest out of sample. <b>Said</b> is the chance the model gave; <b>hit</b> is how often they landed. A
+    recipe is honest when those two agree, and only worth money when <b>return</b> is positive.</p>
+
+  <div class="card summary" id="summary"></div>
+  <div class="card scroll"><table id="table"><thead><tr>
+    <th>Recipe</th><th>Settled</th><th>Said</th><th>Hit</th><th class="hide-sm">Legs</th>
+    <th class="hide-sm">Leg hit</th><th>Return</th><th>Open</th>
+  </tr></thead><tbody></tbody></table>
+
+  <section class="card" id="money" style="margin-top:14px">
+    <p class="note">Working out what a flat $10 on every ticket would have come to...</p>
+  </section></div>
+
+  <div class="bar"><h2>Tickets</h2>
+    <div class="seg" id="filter"><button data-v="all">All</button><button data-v="pending" aria-pressed="true">Running</button>
+      <button data-v="won">Won</button><button data-v="lost">Lost</button></div>
+  </div>
+  <div class="tickets" id="tickets"></div>
+
+  <p class="foot" id="foot"></p>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const el = (t, a = {}, ...k) => { const n = document.createElement(t);
+    for (const [x, v] of Object.entries(a)) { if (v == null) continue; if (x === 'class') n.className = v; else if (x === 'text') n.textContent = v; else n.setAttribute(x, v); }
+    for (const c of k) if (c != null) n.append(c); return n; };
+  const pct = p => `${(100 * p).toFixed(0)}%`;
+  const dec = o => (o > 0 ? 1 + o / 100 : 1 + 100 / -o);
+  const fmtOdds = o => (o > 0 ? `+${o}` : `−${-o}`);
+  const MARK = { won: '✅', lost: '❌', push: '➖', void: '➖', pending: '⏳' };
+  let doc = null, show = 'pending';
+
+  function summarise(tickets, recipes) {
+    const rows = [];
+    for (const r of recipes) {
+      const mine = tickets.filter(t => t.recipe === r.name);
+      const done = mine.filter(t => t.state === 'won' || t.state === 'lost');
+      const won = done.filter(t => t.state === 'won').length;
+      const said = done.length ? done.reduce((a, t) => a + t.p, 0) / done.length : null;
+      const priced = done.filter(t => t.book_odds);
+      const ret = priced.length ? priced.reduce((a, t) => a + (t.state === 'won' ? dec(t.book_odds) - 1 : -1), 0) / priced.length : null;
+      const legs = done.flatMap(t => t.leg_states || []);
+      const legDone = legs.filter(s => s === 'won' || s === 'lost').length;
+      rows.push({ ...r, n: done.length, open: mine.length - done.length, won,
+                  hit: done.length ? won / done.length : null, said,
+                  legs: legDone, legHit: legDone ? legs.filter(s => s === 'won').length / legDone : null,
+                  priced: priced.length, ret });
+    }
+    return rows;
+  }
+
+  function render() {
+    const tickets = doc.tickets || [];
+    const rows = summarise(tickets, doc.recipes || []);
+    const done = tickets.filter(t => t.state === 'won' || t.state === 'lost');
+    const won = done.filter(t => t.state === 'won').length;
+    const expected = done.reduce((a, t) => a + t.p, 0);
+    const legs = done.flatMap(t => t.leg_states || []).filter(s => s === 'won' || s === 'lost');
+    const tile = (n, l) => el('div', {}, el('div', { class: 'n', text: n }), el('div', { class: 'l', text: l }));
+    $('summary').replaceChildren(
+      tile(String(tickets.length), 'tickets written'),
+      tile(`${won}-${done.length - won}`, 'settled won-lost'),
+      tile(done.length ? expected.toFixed(1) : '–', 'wins the model expected'),
+      tile(`${legs.filter(s => s === 'won').length}-${legs.filter(s => s === 'lost').length}`, 'legs won-lost'),
+      tile(String(tickets.length - done.length), 'still running'));
+
+    const body = $('table').tBodies[0];
+    body.replaceChildren();
+    for (const r of rows) {
+      const cell = (v, cls) => el('td', { class: cls }, v);
+      let hit = el('span', { class: 'dim', text: '–' });
+      if (r.n) {
+        const off = r.hit - r.said;
+        hit = el('span', { class: Math.abs(off) < 0.08 ? '' : (off > 0 ? 'good' : 'bad'), text: pct(r.hit) });
+      }
+      body.append(el('tr', {},
+        el('td', {}, el('span', { class: 'name', text: r.name }), el('span', { class: 'about', text: r.about || '' })),
+        cell(String(r.n)),
+        cell(r.said == null ? '–' : pct(r.said), r.said == null ? 'dim' : ''),
+        el('td', {}, hit),
+        cell(String(r.legs || '–'), 'hide-sm'),
+        cell(r.legHit == null ? '–' : pct(r.legHit), 'hide-sm'),
+        cell(r.ret == null ? '–' : `${r.ret > 0 ? '+' : '−'}${Math.abs(100 * r.ret).toFixed(0)}%`,
+             r.ret == null ? 'dim' : (r.ret > 0 ? 'good' : 'bad')),
+        cell(String(r.open), 'dim')));
+    }
+
+    // The same record in money: a flat stake on every settled ticket DraftKings priced in full.
+    const STAKE = 10, MIN_FOR_SE = 20;
+    const priced = tickets.filter(t => (t.state === 'won' || t.state === 'lost') && t.book_odds);
+    const paid = priced.map(t => t.state === 'won' ? STAKE * (dec(t.book_odds) - 1) : -STAKE);
+    const staked = STAKE * priced.length;
+    const profit = paid.reduce((a, b) => a + b, 0);
+    const money = $('money');
+    if (money) {
+      if (!priced.length) {
+        money.replaceChildren(el('p', { class: 'note',
+          text: 'Nothing settled yet with a DraftKings price on every leg, so there is no money record to show.' }));
+      } else {
+        const roi = profit / staked;
+        let se = null;
+        if (paid.length >= MIN_FOR_SE) {
+          const mean = profit / paid.length;
+          const v = paid.reduce((a, x) => a + (x - mean) * (x - mean), 0) / (paid.length - 1);
+          se = Math.sqrt(v / paid.length) / STAKE;
+        }
+        const tell = se == null
+          ? `Far too few to mean anything yet - an error bar needs about ${MIN_FOR_SE} settled bets before it says more than the result does.`
+          : (Math.abs(roi) > 2 * se
+              ? 'That is more than two standard errors from break-even, which is the first point worth a second look.'
+              : `Within noise of break-even (one standard error is ${(100 * se).toFixed(0)} cents in the dollar).`);
+        money.replaceChildren(
+          el('div', { class: 'sum' },
+             el('span', { class: 'big', text: `${profit >= 0 ? '+' : '−'}$${Math.abs(profit).toFixed(0)}` }),
+             el('span', { class: 'meta', text: `$${staked.toFixed(0)} staked over ${priced.length} bets` }),
+             el('span', { class: profit >= 0 ? 'good' : 'bad',
+                          text: `${roi >= 0 ? '+' : '−'}${Math.abs(100 * roi).toFixed(0)}c per $1` })),
+          el('p', { class: 'note', text: tell }));
+      }
+    }
+
+    const list = show === 'all' ? tickets : tickets.filter(t => t.state === show);
+    const box = $('tickets');
+    box.replaceChildren();
+    if (!list.length) {
+      box.append(el('div', { class: 'card empty', text: show === 'pending'
+        ? 'Nothing running: the next slate opens new tickets.' : `No ${show} tickets yet.` }));
+    }
+    for (const t of list.slice().reverse().slice(0, 60)) {
+      const legs = el('ul', {});
+      t.legs.forEach((l, i) => {
+        const st = (t.leg_states || [])[i];
+        legs.append(el('li', {}, `${st ? MARK[st] + ' ' : ''}${l.label}`,
+          el('span', { class: 'sub', text: `${l.sport.toUpperCase()} · ${l.game} · ${pct(l.p)}` })));
+      });
+      box.append(el('article', { class: 'card ticket' },
+        el('header', {}, el('h3', { text: t.recipe }), el('span', { class: `state ${t.state}`, text: t.state.toUpperCase() })),
+        el('div', { class: 'sum' }, el('span', { class: 'big', text: pct(t.p) }),
+           el('span', { class: 'meta', text: `fair ${t.fair > 0 ? '+' : '−'}${Math.abs(t.fair)}` }),
+           t.book_odds ? el('span', { class: 'meta', text: `DK ${fmtOdds(t.book_odds)}` }) : null,
+           el('span', { class: 'meta', text: t.slate || '' })),
+        legs));
+    }
+    document.querySelectorAll('#filter button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === show)));
+    $('foot').textContent = `Written by lab.py each time the site updates, last ${new Date(doc.generated).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}. `
+      + 'Return is what one unit on every settled ticket of that recipe would have come back as, and is only worked out '
+      + 'where DraftKings priced every leg, which rules out the prop recipes: ESPN publishes the book\'s prop lines but '
+      + 'not their prices. Small samples say very little; a few dozen settled tickets is where a recipe starts to mean something.';
+  }
+
+  document.querySelectorAll('#filter button').forEach(b =>
+    b.addEventListener('click', () => { show = b.dataset.v; render(); }));
+
+  (async () => {
+    try {
+      const r = await fetch('data/lab.json', { cache: 'no-cache' });
+      if (!r.ok) throw new Error(r.status);
+      doc = await r.json();
+    } catch (e) {
+      $('summary').replaceChildren(el('div', { class: 'empty', text: 'No experiment yet: lab.py writes it when the site updates.' }));
+      return;
+    }
+    render();
+  })();
+})();
+</script>
+</body>
+</html>

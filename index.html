@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sports Sim</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' rx='8' fill='%230b0b0b'/%3E%3Cpath d='M9 21l5-6 4 3 5-7' fill='none' stroke='%231baf7a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f2f1ec;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --border: rgba(11, 11, 11, 0.10);
+  --home: #eb6834;
+  --accent: #1baf7a;
+  --critical: #d03b3b;
+  --active: rgba(11, 11, 11, 0.06);
+  --nav-w: 224px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #242422;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --border: rgba(255, 255, 255, 0.10);
+    --home: #d95926;
+    --accent: #199e70;
+    --active: rgba(255, 255, 255, 0.08);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #242422;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --border: rgba(255, 255, 255, 0.10);
+  --home: #d95926;
+  --accent: #199e70;
+  --active: rgba(255, 255, 255, 0.08);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  display: grid;
+  grid-template-columns: var(--nav-w) 1fr;
+  transition: grid-template-columns 0.18s ease;
+}
+body.collapsed { --nav-w: 64px; }
+
+/* ------------------------------------------------------------------ navigation pane */
+.side {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 10px;
+  min-width: 0;
+  overflow: hidden auto;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 8px 14px; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap;
+}
+.brand svg { width: 28px; height: 28px; flex: none; }
+.brand small { display: block; font-weight: 450; color: var(--muted); font-size: 12px; }
+.sport {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border: 0; border-radius: 10px; background: transparent;
+  color: var(--ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; white-space: nowrap;
+}
+.sport { position: relative; }
+.sport:hover { background: var(--active); }
+.sport[aria-current="true"] { background: var(--surface-2); }
+.sport[aria-current="true"]::before { content: ""; position: absolute; left: -10px; top: 8px; bottom: 8px; width: 3px;
+  border-radius: 0 3px 3px 0; background: var(--accent); }
+.sport svg { width: 24px; height: 24px; flex: none; }
+.sport .label { flex: 1; min-width: 0; }
+.sport .label small { display: block; font-weight: 450; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.up { background: var(--accent); }
+.dot.starting { background: var(--home); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+.sections { display: flex; flex-direction: column; margin: 2px 0 8px 34px; padding-left: 8px; border-left: 1px solid var(--border); }
+.sections a {
+  color: var(--ink-2); text-decoration: none; font-size: 13.5px;
+  padding: 5px 10px; border-radius: 8px; white-space: nowrap;
+}
+.sections a:hover { background: var(--active); color: var(--ink); }
+.sections a[aria-current="true"] { color: var(--ink); font-weight: 600; }
+.spacer { flex: 1; }
+.foot { display: flex; align-items: center; gap: 6px; padding: 8px 4px 0; border-top: 1px solid var(--border); }
+.iconbtn {
+  border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
+  width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; flex: none;
+}
+.iconbtn:hover { background: var(--active); color: var(--ink); }
+.iconbtn svg { width: 18px; height: 18px; }
+.foot .note { font-size: 12px; color: var(--muted); line-height: 1.3; }
+body.collapsed .brand span, body.collapsed .label, body.collapsed .sections,
+body.collapsed .foot .note { display: none; }
+body.collapsed .sport { justify-content: center; padding: 9px 0; }
+body.collapsed .sport .dot { position: relative; margin-left: -12px; margin-top: -18px; }
+body.collapsed .brand { justify-content: center; padding-left: 0; padding-right: 0; }
+body.collapsed .foot { justify-content: center; }
+body.collapsed #collapse svg { transform: scaleX(-1); }
+
+/* ------------------------------------------------------------------ content */
+main { position: relative; min-width: 0; min-height: 0; }
+iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: 0; background: var(--page); visibility: hidden;
+}
+iframe.on { visibility: visible; }
+.waiting {
+  position: absolute; inset: 0; display: none; place-items: center; text-align: center; padding: 24px;
+}
+.waiting.on { display: grid; }
+.waiting h2 { margin: 14px 0 6px; font-size: 18px; letter-spacing: -0.01em; }
+.waiting p { margin: 0; color: var(--ink-2); max-width: 420px; line-height: 1.45; }
+.spin {
+  width: 34px; height: 34px; margin: 0 auto; border-radius: 50%;
+  border: 3px solid var(--border); border-top-color: var(--ink); animation: turn 0.9s linear infinite;
+}
+@keyframes turn { to { transform: rotate(360deg); } }
+
+/* ------------------------------------------------------------------ phones: a tab bar along the bottom */
+@media (max-width: 720px) {
+  body, body.collapsed { grid-template-columns: 1fr; grid-template-rows: 1fr auto; grid-template-areas: "main" "nav"; --nav-w: 100%; }
+  main { grid-area: main; }
+  .side { grid-area: nav; flex-direction: row; align-items: stretch; justify-content: space-around; gap: 2px;
+          padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--border); overflow: hidden; }
+  .brand, .sections, .spacer, .foot { display: none; }
+  .sport { flex: 1 1 0; width: auto; flex-direction: column; justify-content: center; gap: 3px; padding: 6px 2px;
+           font-size: 11.5px; text-align: center; }
+  .sport .label { flex: none; }
+  .sport .label small, .sport .dot { display: none; }
+  .sport svg { width: 24px; height: 24px; }
+  .sport[aria-current="true"]::before { left: 25%; right: 25%; top: -6px; bottom: auto; width: auto; height: 3px; border-radius: 0 0 3px 3px; }
+  body.collapsed .label { display: block; }
+  body.collapsed .sport { justify-content: center; padding: 6px 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body { transition: none; }
+  .dot.starting, .spin { animation: none; }
+}
+</style>
+</head>
+<body>
+  <nav class="side" aria-label="Sports">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--ink)"/><path d="M9 21l5-6 4 3 5-7" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Sports Sim<small>simulations and picks</small></span>
+    </div>
+
+    <button class="sport" data-app="nfl" aria-current="false" title="NFL">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="16" rx="14" ry="9" fill="var(--home)" stroke="var(--ink)" stroke-width="2"/><path d="M11 16h10M13 13v6M17 13v6" stroke="var(--surface)" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span class="label">NFL<small>ratings + simulations</small></span>
+      <span class="dot" id="dot-nfl" title="Starting"></span>
+    </button>
+    <div class="sections" data-app="nfl">
+      <a href="#nfl/" data-hash="#/">Slate</a>
+      <a href="#nfl/props" data-hash="#/props">Props</a>
+      <a href="#nfl/teams" data-hash="#/teams">Teams</a>
+      <a href="#nfl/record" data-hash="#/record">Record</a>
+    </div>
+
+    <button class="sport" data-app="mlb" aria-current="false" title="MLB">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><path d="M9 5.5c3.5 3 3.5 18 0 21M23 5.5c-3.5 3-3.5 18 0 21" fill="none" stroke="#d03b3b" stroke-width="2"/></svg>
+      <span class="label">MLB<small>at-bat simulations</small></span>
+      <span class="dot" id="dot-mlb" title="Starting"></span>
+    </button>
+    <div class="sections" data-app="mlb">
+      <a href="#mlb/" data-hash="#/">Games</a>
+      <a href="#mlb/players" data-hash="players">Players</a>
+      <a href="#mlb/record" data-hash="#/record">Record</a>
+    </div>
+
+    <button class="sport" data-app="picks" aria-current="false" title="Picks">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="4" width="20" height="25" rx="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><path d="M11 12h10M11 17h10M11 22h6" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>
+      <span class="label">Picks<small>ready to paste</small></span>
+      <span class="dot up" id="dot-picks" title="Ready"></span>
+    </button>
+
+    <button class="sport" data-app="parlays" aria-current="false" title="Parlays">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="9" width="24" height="16" rx="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><path d="M10 9V7h12v2M9 17h4M15 17h8" stroke="var(--home)" stroke-width="2" stroke-linecap="round"/></svg>
+      <span class="label">Parlays<small>build, browse, track</small></span>
+      <span class="dot up" id="dot-parlays" title="Ready"></span>
+    </button>
+
+    <button class="sport" data-app="lab" aria-current="false" title="Lab">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M13 4v8L6 25a3 3 0 0 0 2.7 4h14.6A3 3 0 0 0 26 25l-7-13V4" fill="var(--surface)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><path d="M11 4h10M10 20h12" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>
+      <span class="label">Lab<small>what actually works</small></span>
+      <span class="dot up" id="dot-lab" title="Ready"></span>
+    </button>
+
+    <span class="spacer"></span>
+    <div class="foot">
+      <button class="iconbtn" id="collapse" aria-label="Collapse the navigation pane" title="Collapse">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5L7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="note" id="note">Both dashboards run while the launcher window is open.</span>
+    </div>
+  </nav>
+
+  <main>
+    <iframe id="frame-lab" title="Lab"></iframe>
+    <iframe id="frame-nfl" title="NFL dashboard"></iframe>
+    <iframe id="frame-mlb" title="MLB dashboard"></iframe>
+    <iframe id="frame-picks" title="Picks"></iframe>
+    <iframe id="frame-parlays" title="Parlay builder"></iframe>
+    <div class="waiting" id="waiting" role="status" aria-live="polite">
+      <div>
+        <div class="spin"></div>
+        <h2 id="waiting-title">Starting the dashboard</h2>
+        <p id="waiting-text">The first start loads a few seasons of stats, which takes up to a minute.</p>
+      </div>
+    </div>
+  </main>
+
+<script>
+(() => {
+  // On the PC, hub.py answers /status and each sport runs its own server; on the published copy
+  // (GitHub Pages) there is no /status, and each sport is a folder beside this page.
+  const NAMES = { nfl: 'NFL', mlb: 'MLB', picks: 'Picks', parlays: 'Parlays', lab: 'Lab' };
+  const PAGES = { picks: 'picks.html', parlays: 'parlays.html', lab: 'lab.html' };   // served by this page's own server
+  const WAIT_TEXT = {
+    nfl: 'Building the power ratings and this week\'s games. The first start downloads play-by-play, which can take a minute.',
+    mlb: 'Loading three seasons of player stats and Statcast data. The first start of the day takes up to a minute.',
+  };
+  const status = { nfl: { up: false, port: null }, mlb: { up: false, port: null }, picks: { up: true },
+                   parlays: { up: true }, lab: { up: true } };
+  const loaded = { nfl: false, mlb: false, picks: false, parlays: false, lab: false };
+  let published = false;
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private window */ } },
+  };
+  let active = null;
+
+  const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const base = app => {
+    if (PAGES[app]) return PAGES[app];
+    if (published) return `${app}/`;
+    return `${location.protocol}//${location.hostname}:${status[app].port}/`;
+  };
+  const frame = app => document.getElementById(`frame-${app}`);
+
+  function sectionHash(app, raw) {
+    if (app === 'mlb' && raw === 'players') return `#/p/${today()}`;
+    return raw || '#/';
+  }
+
+  function load(app, hash) {
+    if (!status[app].up) return;
+    const f = frame(app);
+    const url = base(app) + (PAGES[app] ? '' : (hash || '#/'));
+    if (!loaded[app] || (hash && !PAGES[app])) {
+      f.src = url;           // for a new hash on the same page the app routes without reloading
+      loaded[app] = true;
+    }
+  }
+
+  function render() {
+    for (const app of Object.keys(NAMES)) {
+      document.querySelector(`.sport[data-app="${app}"]`).setAttribute('aria-current', String(app === active));
+      frame(app).classList.toggle('on', app === active && status[app].up);
+      if (PAGES[app]) continue;
+      const dot = document.getElementById(`dot-${app}`);
+      dot.className = 'dot ' + (status[app].up ? 'up' : 'starting');
+      dot.title = published ? (status[app].updated ? `Updated ${status[app].updated}` : 'Published')
+                            : (status[app].up ? 'Running' : 'Starting');
+    }
+    const waiting = !status[active].up;
+    document.getElementById('waiting').classList.toggle('on', waiting);
+    if (waiting) {
+      document.getElementById('waiting-title').textContent = `Starting the ${NAMES[active]} dashboard`;
+      document.getElementById('waiting-text').textContent = WAIT_TEXT[active] || '';
+    }
+    document.title = `${NAMES[active]} · Sports Sim`;
+  }
+
+  function show(app, hash) {
+    active = app;
+    store.set('hub.sport', app);
+    if (location.hash.split('/')[0] !== `#${app}`) history.replaceState(null, '', `#${app}`);
+    load(app, hash);
+    render();
+  }
+
+  function markSection(link) {
+    document.querySelectorAll('.sections a').forEach(a => a.setAttribute('aria-current', String(a === link)));
+  }
+
+  document.querySelectorAll('.sport').forEach(btn =>
+    btn.addEventListener('click', () => { markSection(null); show(btn.dataset.app); }));
+  document.querySelectorAll('.sections a').forEach(a =>
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const app = a.closest('.sections').dataset.app;
+      markSection(a);
+      show(app, sectionHash(app, a.dataset.hash));
+    }));
+
+  const collapseBtn = document.getElementById('collapse');
+  const setCollapsed = on => {
+    document.body.classList.toggle('collapsed', on);
+    collapseBtn.setAttribute('aria-label', on ? 'Expand the navigation pane' : 'Collapse the navigation pane');
+    collapseBtn.title = on ? 'Expand' : 'Collapse';
+    store.set('hub.collapsed', on ? '1' : '0');
+  };
+  collapseBtn.addEventListener('click', () => setCollapsed(!document.body.classList.contains('collapsed')));
+  setCollapsed(store.get('hub.collapsed') === '1');
+
+  const fmt = iso => new Date(iso).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+
+  async function goPublished() {
+    published = true;
+    status.nfl = { up: true };
+    status.mlb = { up: true };
+    const times = [];
+    for (const app of ['nfl', 'mlb']) {
+      try {
+        const m = await (await fetch(`${app}/data/meta.json`, { cache: 'no-cache' })).json();
+        status[app].updated = fmt(m.generated);
+        times.push(m.generated);
+      } catch (e) { /* the page still works without the time */ }
+    }
+    const newest = times.sort().pop();
+    document.getElementById('note').textContent = newest
+      ? `Updated ${fmt(newest)}. Simulations run on the PC and publish a few times a day.`
+      : 'Simulations run on the PC and publish a few times a day.';
+    load(active);
+    render();
+  }
+
+  async function poll() {
+    let allUp = false;
+    let r = null;
+    try { r = await fetch('status', { cache: 'no-store' }); } catch (e) { r = null; }
+    // A server with no /status is the published copy (GitHub Pages, or site/ served locally).
+    if (r && r.status === 404 && !published) return goPublished();
+    try {
+      if (!r || !r.ok) throw new Error('no status');
+      const s = await r.json();
+      for (const app of ['nfl', 'mlb']) {
+        const wasUp = status[app].up;
+        status[app] = s[app];
+        if (!status[app].up) loaded[app] = false;
+        // The sport on screen loads as soon as its dashboard answers; the other waits until it
+        // is first opened (each page starts simulating as it loads), then stays loaded.
+        if (status[app].up && !wasUp && app === active) load(app);
+      }
+      allUp = status.nfl.up && status.mlb.up;
+    } catch (e) {
+      status.nfl.up = status.mlb.up = false;
+    }
+    if (PAGES[active]) load(active);
+    render();
+    setTimeout(poll, allUp ? 15000 : 1500);
+  }
+
+  const fromHash = location.hash.replace(/^#/, '').split('/')[0];
+  active = NAMES[fromHash] ? fromHash : (NAMES[store.get('hub.sport')] ? store.get('hub.sport') : 'nfl');
+  render();
+  poll();
+})();
+</script>
+</body>
+</html>
