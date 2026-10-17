@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NFL Sim Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='16' rx='14' ry='9' fill='%23eb6834' stroke='%230b0b0b' stroke-width='2'/%3E%3Cpath d='M11 16h10M13 13v6M17 13v6' stroke='%23fcfcfb' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script>if (window.self !== window.top) document.documentElement.classList.add('embedded');</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <ellipse cx="16" cy="16" rx="14" ry="9" fill="var(--home)" stroke="var(--ink)" stroke-width="2"/>
+          <path d="M11 16h10M13 13v6M17 13v6" stroke="var(--surface)" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span>NFL Sim <small>play-by-play Monte Carlo</small></span>
+      </a>
+
+      <nav class="nav" aria-label="Sections">
+        <a href="#/" data-route="slate">Slate</a>
+        <a href="#/props" data-route="props">Props</a>
+        <a href="#/teams" data-route="teams">Teams</a>
+        <a href="#/record" data-route="record">Record</a>
+      </nav>
+
+      <span class="spacer"></span>
+
+      <div class="controls" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="sub" id="progress" aria-live="polite" style="margin:0"></span>
+        <label class="sr-only" for="season">Season</label>
+        <select class="select num" id="season" title="Season"></select>
+        <label class="sr-only" for="week">Week</label>
+        <select class="select num" id="week" title="Week"></select>
+        <label class="sr-only" for="sims">Simulations per game</label>
+        <select class="select num" id="sims" title="Simulations per game">
+          <option value="2000">2,000 sims</option>
+          <option value="10000" selected>10,000 sims</option>
+          <option value="25000">25,000 sims</option>
+          <option value="50000">50,000 sims</option>
+        </select>
+        <button class="btn btn-icon" id="refresh" title="Reload schedule, starters and weather"
+                aria-label="Reload schedule, starters and weather">&#x21bb;</button>
+        <button class="btn btn-icon" id="theme" title="Theme" aria-label="Theme">&#x25D1;</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="view" tabindex="-1">
+    <p class="notice">Loading the week&hellip;</p>
+  </main>
+
+  <script src="static.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
