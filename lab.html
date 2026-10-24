@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M12 3h8v2h-1v7l7 13a3 3 0 0 1-2.6 4.4H8.6A3 3 0 0 1 6 25l7-13V5h-1z' fill='%2317a673' stroke='%230b0b0b' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* The same softer look as the NBA page: hairlines instead of boxes, big radii, numbers doing the work. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #ffffff; --surface-2: #f3f2ee; --ink: #101010; --ink-2: #4f4e4a; --muted: #8b8982;
+  --grid: #e7e6e0; --border: rgba(16, 16, 16, 0.07); --hair: rgba(16, 16, 16, 0.08);
+  --shadow: 0 1px 1px rgba(16, 16, 16, 0.03), 0 12px 32px -14px rgba(16, 16, 16, 0.14);
+  --accent: #17a673; --good: #0ca30c; --good-text: #07700a; --bad: #d23f3f; --warn: #b06f00; --info: #2f7be0;
+  --good-soft: rgba(12, 163, 12, 0.12); --bad-soft: rgba(210, 63, 63, 0.12); --warn-soft: rgba(176, 111, 0, 0.14); --info-soft: rgba(47, 123, 224, 0.12);
+  --radius: 20px; --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #161616; --surface-2: #202020; --ink: #f6f6f3; --ink-2: #c4c3ba; --muted: #8b8982;
+    --grid: #262626; --border: rgba(255, 255, 255, 0.07); --hair: rgba(255, 255, 255, 0.08);
+    --shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 16px 36px -16px rgba(0, 0, 0, 0.7);
+    --accent: #1fb583; --good-text: #35cc3f; --bad: #ef6b6b; --warn: #e5a63f; --info: #4b92ee;
+    --good-soft: rgba(53, 204, 63, 0.13); --bad-soft: rgba(239, 107, 107, 0.14); --warn-soft: rgba(229, 166, 63, 0.16); --info-soft: rgba(75, 146, 238, 0.16);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { background: var(--page); color: var(--ink); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto 0; height: 320px; pointer-events: none; z-index: -1;
+  background: radial-gradient(900px 240px at 50% -90px, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%); }
+main { max-width: 1040px; margin: 0 auto; padding: 26px 18px 80px; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -0.025em; font-weight: 700; line-height: 1.2; }
+h2 { font-size: 15.5px; margin: 0 0 4px; letter-spacing: -0.005em; font-weight: 650; }
+h3 { font-size: 11.5px; margin: 0 0 8px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.num { font-variant-numeric: tabular-nums; }
+.page-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.stamp { color: var(--muted); font-size: 13px; }
+.lede { color: var(--ink-2); margin: 6px 0 16px; font-size: 14.5px; max-width: 74ch; }
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 14px; max-width: 78ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 22px; margin-top: 16px; }
+.pills { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--surface-2); }
+.pills button { border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 13.5px; font-weight: 550; padding: 6px 15px; border-radius: 999px; cursor: pointer; transition: background .2s var(--ease), color .2s; }
+.pills button:hover { color: var(--ink); }
+.pills button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.pills[hidden] { display: none; }
+.good { color: var(--good-text); } .bad { color: var(--bad); } .dim { color: var(--muted); } .warn { color: var(--warn); }
+
+/* the three figures */
+.hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); }
+.hero > div { padding: 20px 22px; }
+.hero > div + div { border-left: 1px solid var(--hair); }
+.hero .k { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-bottom: 6px; }
+.hero .v { font-size: 30px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.hero .s { color: var(--ink-2); font-size: 13px; margin-top: 8px; }
+.chip { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .03em; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; vertical-align: 1px; }
+.chip.good { background: var(--good-soft); color: var(--good-text); } .chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); } .chip.info { background: var(--info-soft); color: var(--info); }
+
+/* rows with a bar: what the model said against what landed */
+.crow { display: grid; grid-template-columns: minmax(96px, 150px) minmax(120px, 1fr) 58px 118px 112px; gap: 4px 14px; align-items: center; padding: 9px 0; border-top: 1px solid var(--hair); font-size: 13.5px; }
+.crow:first-of-type { border-top: 0; }
+.crow .cl { font-weight: 600; }
+.crow .cl small { display: block; color: var(--muted); font-weight: 400; font-size: 11.5px; }
+.crow .cn, .crow .cg { text-align: right; font-variant-numeric: tabular-nums; }
+.crow .cn { color: var(--muted); }
+.crow .cg { font-weight: 600; }
+.cbar { position: relative; height: 8px; border-radius: 999px; background: var(--surface-2); }
+.cbar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: color-mix(in srgb, var(--accent) 70%, transparent); transform-origin: left center; animation: grow .7s var(--ease) backwards; }
+.cbar i.low { background: color-mix(in srgb, var(--bad) 65%, transparent); }
+.cbar b { position: absolute; top: -4px; width: 2px; height: 16px; border-radius: 2px; background: var(--ink); opacity: .85; transform: translateX(-1px); }
+.crow .cc { text-align: right; }
+@keyframes grow { from { transform: scaleX(0); } }
+.chead { display: grid; grid-template-columns: minmax(96px, 150px) minmax(120px, 1fr) 58px 118px 112px; gap: 4px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding-bottom: 6px; }
+.chead span:nth-child(n+3) { text-align: right; }
+.legend { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+.legend b { display: inline-block; width: 2px; height: 11px; background: var(--ink); vertical-align: -1px; margin: 0 3px; }
+
+/* the price: return bars around zero */
+.rbar { position: relative; height: 8px; border-radius: 999px; background: var(--surface-2); }
+.rbar::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .6; }
+.rbar i { position: absolute; top: 0; bottom: 0; border-radius: 999px; }
+.rbar i.up { left: 50%; background: color-mix(in srgb, var(--good) 70%, transparent); }
+.rbar i.down { right: 50%; background: color-mix(in srgb, var(--bad) 65%, transparent); }
+
+/* tables */
+.scroll { overflow-x: auto; margin: 0 -22px; padding: 0 22px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { padding: 10px 10px; text-align: right; border-bottom: 1px solid var(--hair); vertical-align: middle; white-space: nowrap; }
+th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding-bottom: 8px; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr.pick { cursor: pointer; transition: background .12s; }
+tbody tr.pick:hover { background: var(--surface-2); }
+tbody tr.on { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+td .about { display: block; color: var(--muted); font-size: 11.5px; font-weight: 400; }
+td .nm { font-weight: 600; }
+
+/* money */
+.money { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 22px; align-items: center; }
+.money svg { width: 100%; height: 150px; display: block; }
+.money .big { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.money p { margin: 6px 0 0; color: var(--ink-2); font-size: 13.5px; }
+.axis { stroke: var(--grid); stroke-width: 1; } .zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 4; opacity: .7; }
+.line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.area { fill: color-mix(in srgb, var(--accent) 12%, transparent); stroke: none; }
+
+/* tickets */
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 26px 0 12px; }
+.bar h2 { margin: 0; flex: 1; font-size: 15.5px; }
+.bar select { font: inherit; font-size: 13.5px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 14px; max-width: 100%; }
+.day { margin-top: 12px; }
+.day > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; font-weight: 650; border-bottom: 1px solid var(--hair); }
+.day > summary::-webkit-details-marker { display: none; }
+.day > summary::before { content: "▸"; color: var(--muted); font-size: 12px; transition: transform .2s var(--ease); }
+.day[open] > summary::before { transform: rotate(90deg); }
+.day > summary small { color: var(--muted); font-weight: 450; font-size: 13px; }
+.tickets { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding-top: 12px; }
+.tk { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px 6px; }
+.tk header { display: flex; align-items: center; gap: 8px; }
+.tk h4 { margin: 0; flex: 1; font-size: 11.5px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.state { font-size: 11px; font-weight: 800; letter-spacing: .05em; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
+.state.won { background: var(--good-soft); color: var(--good-text); } .state.lost { background: var(--bad-soft); color: var(--bad); }
+.tk .nums { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin: 6px 0 4px; }
+.tk .nums b { font-size: 21px; letter-spacing: -0.02em; }
+.tk .nums span { color: var(--muted); font-size: 12.5px; }
+.tk ul { list-style: none; margin: 0; padding: 4px 0 8px; }
+.tk li { padding: 6px 0; border-top: 1px dashed var(--hair); font-size: 13.5px; }
+.tk li small { display: block; color: var(--muted); font-size: 11.5px; }
+.more { display: block; margin: 18px auto 0; border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 8px 18px; font: inherit; font-size: 13.5px; cursor: pointer; }
+.empty { color: var(--muted); text-align: center; padding: 26px 8px; font-size: 14px; }
+.foot { color: var(--ink-2); font-size: 13px; line-height: 1.55; margin-top: 26px; max-width: 84ch; }
+details.how { margin-top: 14px; color: var(--ink-2); font-size: 13.5px; }
+details.how summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+details.how p { margin: 8px 0 0; max-width: 80ch; }
+
+@media (max-width: 760px) {
+  main { padding: 18px 14px 70px; } h1 { font-size: 23px; }
+  .hero { grid-template-columns: 1fr; } .hero > div + div { border-left: 0; border-top: 1px solid var(--hair); }
+  .hero .v { font-size: 26px; }
+  .card { padding: 16px 16px; border-radius: 18px; }
+  .scroll { margin: 0 -16px; padding: 0 16px; }
+  .crow, .chead { grid-template-columns: 1fr 52px 96px; }
+  .chead span:nth-child(2), .crow .cbar { display: none; }
+  .crow .cl { grid-column: 1; } .crow .cc { grid-column: 1 / -1; text-align: left; }
+  .crow .cbar { display: block; grid-column: 1 / -1; order: 5; }
+  .money { grid-template-columns: 1fr; }
+  .tickets { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* the month */
+.months { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 14px 0 6px; }
+.months .pills button .now { color: var(--accent); font-size: 11px; margin-left: 6px; font-weight: 700; }
+.lessons { margin: 0; padding: 0; list-style: none; }
+.lessons li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 9px 0; border-top: 1px solid var(--hair); font-size: 14px; }
+.lessons li:first-child { border-top: 0; }
+.lessons .ic { width: 8px; height: 8px; border-radius: 50%; margin: 7px 0 0 4px; background: var(--muted); opacity: .8; }
+.lessons .ic.good { background: var(--good); } .lessons .ic.bad { background: var(--bad); } .lessons .ic.info { background: var(--info); } .lessons .ic.warn { background: var(--warn); }
+.lessons small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 1px; }
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 12px; }
+.check { border: 1px solid var(--hair); border-radius: 14px; padding: 11px 14px; font-size: 13.5px; }
+.check b { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: block; margin-bottom: 2px; }
+.check .n { font-variant-numeric: tabular-nums; }
+.preview { opacity: .85; }
+.sub-h { margin: 16px 0 6px; }
+.note-line { color: var(--ink-2); font-size: 13.5px; margin: 10px 0 0; max-width: 80ch; }
+</style>
+</head>
+<body>
+<main>
+  <div class="page-head"><h1>Lab</h1><span class="stamp" id="stamp"></span></div>
+  <p class="lede">A standing experiment, not a tip sheet. Each month the machine writes down parlays to fixed recipes before the games start, grades them
+    afterwards, and never edits one; it also keeps every leg on the board and how it ended. When the month closes it learns from it, starts a fresh record,
+    and the new month is run under what it learned, so the next one shows whether the lessons were any good.</p>
+  <div class="months"><div class="pills" id="month"></div><div class="pills" id="sport" hidden></div></div>
+
+  <div class="hero" id="hero"></div>
+
+  <section class="card" id="sec-lessons"><div id="lessons"></div></section>
+
+  <section class="card" id="sec-calib">
+    <h2>Do the chances mean what they say?</h2>
+    <p class="hint">Every leg on the board that has settled, each counted once. <i>Said</i> is the chance the model gave; <i>landed</i> is how often it hit. When the two
+      agree the model is honest. The error bar counts a game's legs as one, since they are not independent.</p>
+    <div id="calib"></div>
+  </section>
+
+  <section class="card" id="sec-price">
+    <h2>Does the model beat the price?</h2>
+    <div id="price"></div>
+  </section>
+
+  <section class="card" id="sec-recipes">
+    <h2>Recipes</h2>
+    <p class="hint">Each recipe is a question. <i>Said</i> and <i>Hit</i> are the ticket-level version of the first chart, and the verdict compares the tickets that won with the number the model
+      expected. Tap a row to see only its tickets.</p>
+    <div class="scroll"><table id="table"><thead><tr>
+      <th>Recipe</th><th>Settled</th><th>Said</th><th>Hit</th><th>Verdict</th><th>Return</th><th>Open</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="card" id="sec-money"><div id="money"></div></section>
+
+  <div id="sec-taught"></div>
+
+  <div id="sec-tickets">
+    <div class="bar"><h2>Tickets</h2>
+      <select id="recipe" aria-label="Recipe"></select>
+      <div class="pills" id="filter"><button data-v="all">All</button><button data-v="pending" aria-pressed="true">Running</button><button data-v="won">Won</button><button data-v="lost">Lost</button></div>
+    </div>
+    <div id="tickets"></div>
+  </div>
+
+  <details class="how"><summary>How to read this page</summary>
+    <p><b>Said vs landed.</b> If the model says 60% for a thousand legs, about six hundred should land. Fewer means it is too confident; the page says so only when the gap is
+      well outside its error bar, and says "too few" under 30 legs.</p>
+    <p><b>Return.</b> What a flat $1 on every leg (or $10 on every ticket) would have come back as, at DraftKings' price. A bet at fair odds still loses the margin the book keeps (a few cents), so
+      "−5¢" is the model being no better than the price, not a failure. A result is worth a second look only when it is a couple of error bars from there.</p>
+    <p><b>The price.</b> The ledger keeps the last price and chance a leg had before its game started. Only legs with a real DraftKings price count for the price test: game lines, the NBA's and MLB's props,
+      and the NFL's main prop lines in the hours before kickoff. An estimated price is never counted as one.</p>
+    <p><b>The month.</b> On the first run of a new month the record is archived and the Lab fits what it taught: a correction to each sport's chances (kept only if it beats the raw chances on legs held out by game),
+      the chances above which the model stopped being believed, and the recipes to run more or less. Those lessons are then fixed for the whole next month, and every leg's raw and corrected chance are kept, so the
+      "is it working?" check at the top is a fair test on games the lessons never saw.</p>
+  </details>
+  <p class="foot" id="foot"></p>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const el = (t, a = {}, ...k) => { const n = document.createElement(t);
+    for (const [x, v] of Object.entries(a)) { if (v == null || v === false) continue; if (x === 'class') n.className = v; else if (x === 'text') n.textContent = v; else n.setAttribute(x, v); }
+    for (const c of k.flat()) if (c != null && c !== false) n.append(c); return n; };
+  const MINUS = '−';
+  const pct = p => `${(100 * p).toFixed(0)}%`;
+  const pts = (x, d = 1) => `${x < 0 ? MINUS : '+'}${Math.abs(100 * x).toFixed(d)}`;
+  const cents = x => `${x < 0 ? MINUS : '+'}${Math.abs(100 * x).toFixed(0)}¢`;
+  const dec = o => (o > 0 ? 1 + o / 100 : 1 + 100 / -o);
+  const fmtOdds = o => (o > 0 ? `+${o}` : `${MINUS}${-o}`);
+  const when = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  const day = t => { const d = new Date(`${String(t).slice(0, 10)}T12:00:00`); return isNaN(d) ? String(t || '') : d.toLocaleDateString([], { day: 'numeric', month: 'short' }); };
+  const MARK = { won: '✅', lost: '❌', push: '➖', void: '➖', pending: '⏳' };
+  const SPORT_ORDER = ['nfl', 'mlb', 'nba', 'cfb'];
+  const SPORT_KEY = 'lab.sport';
+  const MIN_N = 30;
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const labelOf = id => { const [y, m] = String(id).split('-').map(Number); return `${MONTHS[(m || 1) - 1]} ${y}`; };
+  const expit = z => 1 / (1 + Math.exp(-z));
+  const logit = p => { p = Math.min(Math.max(p, 0.01), 0.99); return Math.log(p / (1 - p)); };
+
+  let view = null, doc = null, months = [], archived = {}, picked = '', sport = 'all', show = 'pending', recipeFilter = '', days = 8;
+  try { sport = localStorage.getItem(SPORT_KEY) || 'all'; } catch (e) {}
+
+  const get = async url => { try { const r = await fetch(url, { cache: 'no-cache' }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
+  const chip = v => (v ? el('span', { class: `chip ${v.tone || ''}`, text: v.text }) : null);
+  const shown = () => (picked && picked !== view.period.id ? archived[picked] : view);
+  const isNow = () => shown() === view;
+  const ticketSport = t => t.sport || ((t.legs || [])[0] || {}).sport || null;
+  const sportLabel = () => (sport === 'all' ? '' : sport.toUpperCase() + ' ');
+
+  // ---------------------------------------------------------------- the month and the sport
+  function monthButtons() {
+    const cur = view.period;
+    const list = [{ id: cur.id, label: cur.label, now: true }, ...months.filter(m => m.id !== cur.id)];
+    const box = $('month');
+    box.hidden = list.length < 2;
+    box.replaceChildren(...list.map(m => {
+      const b = el('button', { 'aria-pressed': String(m.id === (picked || cur.id)) }, m.label, m.now ? el('span', { class: 'now', text: 'now' }) : null);
+      b.addEventListener('click', async () => {
+        picked = m.id;
+        if (!m.now && !archived[m.id]) archived[m.id] = await get(`data/lab_archive/${m.id}.json`);
+        if (!shown()) { picked = ''; }
+        recipeFilter = ''; days = 8; render();
+      });
+      return b;
+    }));
+  }
+  function sportButtons(v) {
+    const have = new Set((v.sports || []).filter(Boolean));
+    const list = SPORT_ORDER.filter(s => have.has(s));
+    if (sport !== 'all' && !list.includes(sport)) sport = 'all';
+    const box = $('sport');
+    box.hidden = list.length < 2;
+    box.replaceChildren(...['all', ...list].map(s => {
+      const b = el('button', { 'data-v': s, 'aria-pressed': String(s === sport), text: s === 'all' ? 'All' : s.toUpperCase() });
+      b.addEventListener('click', () => { sport = s; recipeFilter = ''; try { localStorage.setItem(SPORT_KEY, s); } catch (e) {} render(); });
+      return b;
+    }));
+  }
+
+  // ---------------------------------------------------------------- the three figures
+  function hero(sc) {
+    const h = sc.hero || {};
+    const b = h.legs, pr = h.price, mo = h.money;
+    const within = pr ? Math.abs(pr.ret) < 2 * pr.se_ret : true;
+    $('hero').replaceChildren(
+      el('div', {}, el('div', { class: 'k', text: 'Chances vs results' }),
+        b ? [el('div', { class: `v ${b.verdict.tone}`, text: `${pts(b.gap)} pts` }),
+             el('div', { class: 's' }, `${sportLabel()}legs said ${pct(b.said)}, landed ${pct(b.hit)} (${b.n.toLocaleString()} legs, ±${(100 * b.se).toFixed(1)}). `, chip(b.verdict))]
+          : [el('div', { class: 'v dim', text: '–' }), el('div', { class: 's', text: 'Nothing has settled yet.' })]),
+      el('div', {}, el('div', { class: 'k', text: 'Against the price' }),
+        pr ? [el('div', { class: `v ${within ? '' : (pr.ret > 0 ? 'good' : 'bad')}`, text: cents(pr.ret) }),
+              el('div', { class: 's' }, `per $1 on ${pr.n.toLocaleString()} priced ${sportLabel()}legs, ±${(100 * pr.se_ret).toFixed(0)}¢. `,
+                 within ? 'Within noise of what the margin alone costs.' : (pr.ret > 0 ? 'More than two error bars above zero.' : 'More than two error bars below zero.'))]
+           : [el('div', { class: 'v dim', text: '–' }), el('div', { class: 's', text: 'No priced leg has settled yet.' })]),
+      el('div', {}, el('div', { class: 'k', text: '$10 a ticket' }),
+        mo ? [el('div', { class: `v ${mo.se != null && Math.abs(mo.roi) > 2 * mo.se ? (mo.profit > 0 ? 'good' : 'bad') : ''}`, text: `${mo.profit < 0 ? MINUS : '+'}$${Math.abs(mo.profit).toFixed(0)}` }),
+              el('div', { class: 's', text: `on ${mo.n} priced tickets (${cents(mo.roi)} per $1${mo.se != null ? ` ±${(100 * mo.se).toFixed(0)}¢` : ', too few for an error bar'}).` })]
+           : [el('div', { class: 'v dim', text: '–' }), el('div', { class: 's', text: 'No ticket has settled with a price on every leg.' })]));
+  }
+
+  // ---------------------------------------------------------------- what the month runs under, and whether it is working
+  const fix = (c, p) => expit(c.a + c.b * logit(p));
+  function lessonItems(L, preview) {
+    const items = [];
+    for (const [s, c] of Object.entries(L.calibration || {})) {
+      if (c.accepted) {
+        items.push({ tone: 'good', text: `${s.toUpperCase()} chances are corrected: a leg the model puts at 60% now counts ${pct(fix(c, 0.6))}, at 75% ${pct(fix(c, 0.75))}, at 90% ${pct(fix(c, 0.9))}.`,
+                     small: `Fitted on ${c.n.toLocaleString()} legs; on legs held out by game it cut the Brier score by ${c.gain.toFixed(4)}.` });
+      } else if (c.why) {
+        items.push({ tone: '', text: `${s.toUpperCase()} chances are left as the model gives them.`, small: c.why.charAt(0).toUpperCase() + c.why.slice(1) + '.' });
+      }
+    }
+    for (const [s, c] of Object.entries(L.trust || {})) {
+      items.push({ tone: 'warn', text: `${s.toUpperCase()}: recipes no longer build on legs the model puts at ${pct(c.max_p)} or more.`, small: c.why.charAt(0).toUpperCase() + c.why.slice(1) + '.' });
+    }
+    for (const [name, a] of Object.entries(L.allocation || {})) {
+      items.push({ tone: a.direction === 'more' ? 'good' : 'bad', text: `${name}: ${a.direction === 'more' ? 'more' : 'fewer'} tickets, ${a.per_slate} a slate.`, small: a.why.charAt(0).toUpperCase() + a.why.slice(1) + '.' });
+    }
+    return items;
+  }
+  const lessonList = (items, cls) => el('ul', { class: `lessons ${cls || ''}` }, ...items.map(i =>
+    el('li', {}, el('span', { class: `ic ${i.tone}` }), el('div', {}, i.text, i.small ? el('small', { text: i.small }) : null))));
+  function checkNote(c) {
+    if (c.n < 100) return 'too early to say';
+    const z = c.gain / Math.max(c.se, 1e-9);
+    return z >= 2 ? 'the correction is helping' : (z <= -2 ? 'the correction is hurting' : 'no clear difference yet');
+  }
+  function lessons(v) {
+    const L = v.lessons || {}, now = isNow();
+    const parts = [el('h2', { text: now ? 'What this month runs under' : 'What this month ran under' })];
+    if (!L.learned_from) {
+      parts.push(el('p', { class: 'hint', text: now
+        ? 'This is the first month, so it runs on the model exactly as it is: nothing has been learned yet. When the month closes, the Lab fits what it taught and the next month runs under that.'
+        : 'This was the first month: it ran on the model as it was.' }));
+      const pv = v.preview ? lessonItems(v.preview) : [];
+      if (now && pv.length) parts.push(el('h3', { class: 'sub-h', text: 'If the month closed today, it would learn' }), lessonList(pv, 'preview'));
+    } else {
+      const items = lessonItems(L);
+      parts.push(el('p', { class: 'hint', text: `Fitted on ${labelOf(L.learned_from)}'s record and fixed for the whole month, so it can be tested on games it never saw.` }));
+      parts.push(items.length ? lessonList(items) : el('p', { class: 'note-line', text: `Nothing to change: ${labelOf(L.learned_from)}'s chances were close enough to honest.` }));
+      const ck = Object.entries(v.check || {});
+      if (ck.length) {
+        parts.push(el('h3', { class: 'sub-h', text: 'Is it working? The raw chances against the corrected ones, on this month’s legs' }),
+          el('div', { class: 'checks' }, ...ck.map(([s, c]) => el('div', { class: 'check' }, el('b', { text: s.toUpperCase() }),
+            el('div', { class: 'n', text: `Brier ${c.brier_raw.toFixed(4)} → ${c.brier_adj.toFixed(4)}` }),
+            el('div', { class: 'dim', text: `${c.n.toLocaleString()} legs: ${checkNote(c)}` })))),
+          el('p', { class: 'legend', text: 'Brier score: the average squared miss, lower is better. The corrected chance was written beside the raw one before each game, so this is a fair test.' }));
+      } else if (now) {
+        parts.push(el('p', { class: 'note-line', text: 'The check (raw chances against corrected ones) appears here once this month’s legs start to settle.' }));
+      }
+    }
+    $('lessons').replaceChildren(...parts);
+  }
+
+  // ---------------------------------------------------------------- calibration
+  const chanceName = (lo, hi) => (lo <= 0 ? `under ${Math.round(100 * hi)}%` : (hi > 1 ? `${Math.round(100 * lo)}%+` : `${Math.round(100 * lo)}-${Math.round(100 * hi)}%`));
+  function crow(label, sub, b) {
+    const low = b.gap < -0.03 && b.n >= MIN_N;
+    return el('div', { class: 'crow' },
+      el('div', { class: 'cl' }, label, sub ? el('small', { text: sub }) : null),
+      el('div', { class: 'cbar', title: `Said ${pct(b.said)}, landed ${pct(b.hit)}` },
+        el('i', { class: low ? 'low' : '', style: `width:${Math.max(0.5, 100 * b.hit)}%` }), el('b', { style: `left:${100 * b.said}%` })),
+      el('div', { class: 'cn', text: `n ${b.n.toLocaleString()}` }),
+      el('div', { class: `cg ${b.n >= MIN_N && Math.abs(b.gap) > 1.5 * b.se ? (b.gap < 0 ? 'bad' : 'good') : 'dim'}`, text: `${pts(b.gap)} ±${(100 * b.se).toFixed(1)}` }),
+      el('div', { class: 'cc' }, chip(b.verdict)));
+  }
+  const chead = first => el('div', { class: 'chead' }, el('span', { text: first }), el('span', { text: 'said → landed' }), el('span', { text: 'legs' }), el('span', { text: 'gap, points' }), el('span', { text: '' }));
+  function calibration(sc, v) {
+    const box = $('calib');
+    if (!sc.hero || !sc.hero.legs) { box.replaceChildren(el('div', { class: 'empty', text: `No ${sportLabel()}leg has settled yet.` })); return; }
+    const parts = [];
+    if (sport === 'all' && (sc.sports || []).length > 1) parts.push(el('h3', { text: 'By sport' }), chead('Sport'), ...sc.sports.map(b => crow(b.sport.toUpperCase(), '', b)));
+    parts.push(el('h3', { style: parts.length ? 'margin-top:20px' : '', text: 'By the chance the model gave' }), chead('Chance'), ...(sc.chance || []).map(b => crow(chanceName(b.lo, b.hi), '', b)));
+    if ((sc.markets || []).length) parts.push(el('h3', { style: 'margin-top:20px', text: 'By market' }), chead('Market'), ...sc.markets.map(b => crow(b.market, sport === 'all' ? b.sport.toUpperCase() : '', b)));
+    if (sport === 'all' && (v.flags || []).length > 1) {
+      parts.push(el('h3', { style: 'margin-top:20px', text: 'Does the off-book flag work?' }), chead('Legs'), ...v.flags.map(f => crow(f.name, '', f)),
+                 el('p', { class: 'legend', text: 'The flag marks a player the model and DraftKings disagree about. If it works, flagged legs should land further below the model than the rest.' }));
+    }
+    parts.push(el('p', { class: 'legend' }, 'The tick ', el('b'), ' is what the model said; the bar is how often it landed. A bar short of its tick means too confident. Under 30 legs a row says "too few" and should not be read.'));
+    box.replaceChildren(...parts);
+  }
+
+  // ---------------------------------------------------------------- the price
+  const edgeLabel = (lo, hi) => {
+    const f = x => Math.round(100 * Math.abs(x));
+    if (lo <= -1) return `model ${f(hi)}+ pts below the price`;
+    if (hi >= 1) return `model ${f(lo)}+ pts above the price`;
+    return hi <= 0 ? `model ${f(hi)}-${f(lo)} pts below` : (lo < 0 ? 'model level with the price' : `model ${f(lo)}-${f(hi)} pts above`);
+  };
+  function pricePanel(sc, v) {
+    const box = $('price'), a = sc.hero && sc.hero.price;
+    if (!a) { box.replaceChildren(el('p', { class: 'hint', text: `No priced ${sportLabel()}leg has settled yet. The ledger writes down every leg on the board with the price it had (where DraftKings had one) and grades it when the game ends.` })); return; }
+    const within = Math.abs(a.ret) < 2 * a.se_ret;
+    const parts = [
+      el('p', { class: 'hint', text: `${a.n.toLocaleString()} priced ${sportLabel()}legs have settled${v.waiting ? `, with ${v.waiting.toLocaleString()} legs on the board still to play` : ''}. Each is kept with the price and chance it had last before its game started. `
+        + 'A bet at a fair price still loses the margin the book keeps (about 5 cents on the dollar), so the question is whether the legs the model liked best did better than that.' }),
+      el('p', { style: 'margin:0 0 14px;font-size:14.5px' }, 'A flat $1 on every one returned ', el('b', { class: within ? '' : (a.ret > 0 ? 'good' : 'bad'), text: cents(a.ret) }),
+         ` (±${(100 * a.se_ret).toFixed(0)}¢): the model said ${pct(a.said)}, the price implied ${pct(a.implied)}, and ${pct(a.hit)} landed. `,
+         within ? 'That is within noise of simply paying the margin: no sign that the model beats the price.' : (a.ret > 0 ? 'That is more than two error bars above zero.' : 'That is more than two error bars below zero.'))];
+    const rows = sc.edge || [];
+    parts.push(el('div', { class: 'scroll' }, el('table', {},
+      el('thead', {}, el('tr', {}, ...['Where the model stood', 'Legs', 'Model', 'Price', 'Landed', 'Return', ''].map(h => el('th', { text: h })))),
+      el('tbody', {}, ...rows.map(r => {
+        const w = Math.min(50, 50 * Math.abs(r.ret) / 0.4);
+        return el('tr', {}, el('td', {}, el('span', { class: 'nm', text: edgeLabel(r.lo, r.hi) })),
+          el('td', { text: r.n.toLocaleString() }), el('td', { text: pct(r.said) }), el('td', { text: pct(r.implied) }), el('td', { text: pct(r.hit) }),
+          el('td', { class: Math.abs(r.ret) > 2 * r.se_ret ? (r.ret > 0 ? 'good' : 'bad') : '', text: `${cents(r.ret)} ±${(100 * r.se_ret).toFixed(0)}` }),
+          el('td', { style: 'min-width:120px' }, el('div', { class: 'rbar' }, el('i', { class: r.ret >= 0 ? 'up' : 'down', style: `width:${w}%` }))));
+      })))));
+    parts.push(el('p', { class: 'legend', text: 'Return is per $1 staked on each leg alone, at the price DraftKings showed. ± is one error bar, from the legs of a game counted together. Small rows swing a lot.' }));
+    box.replaceChildren(...parts);
+  }
+
+  // ---------------------------------------------------------------- recipes, money
+  function recipeTable(sc, now) {
+    const body = $('table').tBodies[0];
+    body.replaceChildren();
+    for (const r of sc.recipes || []) {
+      const ret = r.ret;
+      const tr = el('tr', { class: now ? `pick${recipeFilter === r.name ? ' on' : ''}` : '', title: now ? 'Show only this recipe\'s tickets' : '' },
+        el('td', {}, el('span', { class: 'nm', text: r.name }), el('span', { class: 'about', text: r.about || '' })),
+        el('td', { text: String(r.n) }),
+        el('td', { class: r.n ? '' : 'dim', text: r.n ? pct(r.said) : '–' }),
+        el('td', { class: r.n ? '' : 'dim', text: r.n ? pct(r.hit) : '–' }),
+        el('td', {}, r.n ? chip(r.verdict) : el('span', { class: 'dim', text: '–' })),
+        el('td', { class: ret == null ? 'dim' : (r.se_ret != null && Math.abs(ret) > 2 * r.se_ret ? (ret > 0 ? 'good' : 'bad') : ''), text: ret == null ? '–' : `${ret < 0 ? MINUS : '+'}${Math.abs(100 * ret).toFixed(0)}%` }),
+        el('td', { class: 'dim', text: String(r.open) }));
+      if (now) tr.addEventListener('click', () => { recipeFilter = recipeFilter === r.name ? '' : r.name; render(); $('tickets').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      body.append(tr);
+    }
+  }
+  function moneyPanel(sc) {
+    const box = $('money'), mo = sc.money;
+    box.replaceChildren(el('h2', { text: 'Money: $10 on every ticket DraftKings priced in full' }));
+    if (!mo) { box.append(el('p', { class: 'hint', text: `No ${sportLabel()}ticket has settled with a price on every leg, so there is no money record to show.` })); return; }
+    const pts_ = mo.series || [];
+    const lo = Math.min(0, ...pts_), hi = Math.max(0, ...pts_), span = (hi - lo) || 1;
+    const W = 600, H = 150, pad = 8;
+    const X = i => pad + (W - 2 * pad) * (pts_.length === 1 ? 1 : i / (pts_.length - 1));
+    const Y = v => H - pad - (H - 2 * pad) * (v - lo) / span;
+    const path = pts_.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+    const ns = 'http://www.w3.org/2000/svg';
+    const mk = (tag, attrs) => { const n = document.createElementNS(ns, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
+    const svg = mk('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'none', role: 'img', 'aria-label': `Running profit ending at ${mo.profit.toFixed(0)} dollars` });
+    if (pts_.length) svg.append(mk('path', { d: `${path} L${X(pts_.length - 1).toFixed(1)},${Y(0).toFixed(1)} L${X(0).toFixed(1)},${Y(0).toFixed(1)} Z`, class: 'area' }),
+      mk('line', { x1: 0, x2: W, y1: Y(0), y2: Y(0), class: 'zero' }), mk('path', { d: path, class: 'line', 'vector-effect': 'non-scaling-stroke' }));
+    const tell = mo.se == null ? 'Far too few to mean anything yet: an error bar needs about 20 settled bets.'
+      : (Math.abs(mo.roi) > 2 * mo.se ? 'That is more than two standard errors from break-even, which is the first point worth a second look.'
+         : `Within noise of break-even (one standard error is ${(100 * mo.se).toFixed(0)} cents in the dollar).`);
+    box.append(el('div', { class: 'money' }, el('div', {}, svg, el('div', { class: 'legend', text: `Running profit, ${mo.n} settled tickets in the order they settled. The dashed line is zero.` })),
+      el('div', {}, el('div', { class: `big ${mo.profit >= 0 ? 'good' : 'bad'}`, text: `${mo.profit < 0 ? MINUS : '+'}$${Math.abs(mo.profit).toFixed(0)}` }),
+        el('p', { text: `$${mo.staked.toFixed(0)} staked over ${mo.n} bets: ${cents(mo.roi)} per $1.` }), el('p', { text: tell }))));
+  }
+
+  // ---------------------------------------------------------------- what a closed month taught
+  function taught(v) {
+    const box = $('sec-taught');
+    box.replaceChildren();
+    const L = v.learned;
+    if (isNow() || !L) return;
+    const items = lessonItems(L);
+    const fs = L.findings || [];
+    box.append(el('section', { class: 'card' }, el('h2', { text: `What ${v.period.label} taught` }),
+      el('p', { class: 'hint', text: 'Fitted when the month closed. The next month ran under these, and its own record is the test of them.' }),
+      fs.length ? lessonList(fs.map(f => ({ tone: f.kind || '', text: f.text }))) : null,
+      items.length ? [el('h3', { class: 'sub-h', text: 'What changed because of it' }), lessonList(items)] : el('p', { class: 'note-line', text: 'Nothing needed changing.' })));
+  }
+
+  // ---------------------------------------------------------------- tickets (this month's, on the PC's record)
+  function ticketList() {
+    const box = $('sec-tickets');
+    box.hidden = !isNow() || !doc;
+    if (box.hidden) return;
+    const every = doc.tickets || [];
+    const tickets = sport === 'all' ? every : every.filter(t => ticketSport(t) === sport);
+    const recipes = (view.scopes[sport] || view.scopes.all).recipes || [];
+    const sel = $('recipe');
+    const names = recipes.map(r => r.name);
+    sel.replaceChildren(el('option', { value: '', text: 'All recipes' }), ...names.map(n => el('option', { value: n, text: n })));
+    if (recipeFilter && !names.includes(recipeFilter)) recipeFilter = '';
+    sel.value = recipeFilter;
+    document.querySelectorAll('#filter button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === show)));
+    const list = tickets.filter(t => (show === 'all' || t.state === show) && (!recipeFilter || t.recipe === recipeFilter));
+    const out = $('tickets');
+    out.replaceChildren();
+    if (!list.length) { out.append(el('div', { class: 'empty', text: show === 'pending' ? `No ${sportLabel()}tickets running: the next slate opens new ones.` : `No ${show === 'all' ? '' : show + ' '}${sportLabel()}tickets yet.` })); return; }
+    const byDay = new Map();
+    for (const t of list.slice().reverse()) (byDay.get(t.slate || 'earlier') || byDay.set(t.slate || 'earlier', []).get(t.slate || 'earlier')).push(t);
+    const keys = [...byDay.keys()].sort().reverse();
+    keys.slice(0, days).forEach((d, i) => {
+      const ts = byDay.get(d);
+      const c = s => ts.filter(t => t.state === s).length;
+      const dd = new Date(`${d}T12:00:00`);
+      const title = isNaN(dd) ? d : dd.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+      out.append(el('details', { class: 'day', open: i === 0 ? '' : null },
+        el('summary', {}, title, el('small', { text: `${ts.length} ticket${ts.length === 1 ? '' : 's'}${c('won') ? ` · ${c('won')} won` : ''}${c('lost') ? ` · ${c('lost')} lost` : ''}${c('pending') ? ` · ${c('pending')} running` : ''}` })),
+        el('div', { class: 'tickets' }, ...ts.map(ticketCard))));
+    });
+    if (keys.length > days) {
+      const more = el('button', { class: 'more', text: `Show older days (${keys.length - days} more)` });
+      more.addEventListener('click', () => { days += 8; ticketList(); });
+      out.append(more);
+    }
+  }
+  function ticketCard(t) {
+    const legs = el('ul', {});
+    t.legs.forEach((l, i) => {
+      const st = (t.leg_states || [])[i];
+      const px = (l.book || {}).odds != null ? ` · DK ${fmtOdds(l.book.odds)}` : ((l.book || {}).est != null ? ` · DK ≈${fmtOdds(l.book.est)}` : '');
+      legs.append(el('li', {}, `${st ? MARK[st] + ' ' : ''}${l.label}`,
+        el('small', { text: `${l.sport.toUpperCase()} · ${l.game} · ${pct(l.p)}${px}${(t.leg_notes || {})[i] ? ' · void: ' + t.leg_notes[i] : ''}` })));
+    });
+    return el('article', { class: 'tk' },
+      el('header', {}, el('h4', { text: t.recipe }), el('span', { class: `state ${t.state}`, text: t.state.toUpperCase() })),
+      el('div', { class: 'nums' }, el('b', { class: 'num', text: pct(t.p) }), el('span', { text: `fair ${t.fair > 0 ? '+' : MINUS}${Math.abs(t.fair)}` }),
+         t.book_odds ? el('span', { text: `DK ${fmtOdds(t.book_odds)}` }) : null),
+      legs);
+  }
+
+  // ---------------------------------------------------------------- render
+  function render() {
+    const v = shown();
+    const now = isNow();
+    sportButtons(v);
+    monthButtons();
+    document.querySelectorAll('#sport button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === sport)));
+    const sc = v.scopes[sport] || v.scopes.all;
+    const p = v.period || {};
+    $('stamp').textContent = now ? `${p.label} · day ${p.day} of this record · updated ${when(v.generated)}` : `${p.label} · ${p.started ? day(p.started) : ''} to ${p.ended ? day(p.ended) : ''}${p.open ? ' · a few games still to settle' : ''}`;
+    hero(sc);
+    lessons(v);
+    calibration(sc, v);
+    pricePanel(sc, v);
+    recipeTable(sc, now);
+    moneyPanel(sc);
+    taught(v);
+    ticketList();
+    const pulled = now && doc ? (doc.removed || []).map(r => `${r.recipe} on ${r.slate}, ${(r.legs || []).join(' + ')} - ${r.why}`) : [];
+    const fixes = now && doc ? (doc.corrections || []) : [];
+    $('foot').textContent = (pulled.length ? `${pulled.length} ticket${pulled.length > 1 ? 's' : ''} written by a bug ${pulled.length > 1 ? 'were' : 'was'} pulled before settling, and ${pulled.length > 1 ? 'are' : 'is'} listed here so nothing goes missing quietly: ${pulled.join('; ')}. ` : '')
+      + (fixes.length ? `Corrections to the record, in order: ${fixes.map(c => `${c.on}: ${c.text}`).join(' ')} ` : '')
+      + ((pulled.length || fixes.length) ? 'Nothing else has ever been edited or removed. ' : '')
+      + 'Written by lab.py each time the site updates; the tickets and the ledger stay on the PC, and a closed month is kept there whole. Return is only worked out where DraftKings priced every leg: game lines, the NBA’s and MLB’s props, and the NFL’s main prop lines in the hours before a game. '
+      + 'Small samples say very little; a few dozen settled tickets, or a few hundred legs, is where a number starts to mean something.';
+  }
+
+  document.querySelectorAll('#filter button').forEach(b => b.addEventListener('click', () => { show = b.dataset.v; days = 8; ticketList(); }));
+  $('recipe').addEventListener('change', () => { recipeFilter = $('recipe').value; days = 8; render(); });
+
+  (async () => {
+    [view, doc, months] = await Promise.all([get('data/lab_view.json'), get('data/lab.json'), get('data/lab_archive/index.json')]);
+    months = months || [];
+    if (!view) {
+      $('hero').replaceChildren(el('div', { class: 'empty', text: 'No experiment yet: lab.py writes it when the site updates.' }));
+      return;
+    }
+    picked = view.period.id;
+    render();
+  })();
+})();
+
+</script>
+</body>
+</html>

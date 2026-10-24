@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NBA</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23eb6834' stroke='%230b0b0b' stroke-width='2'/%3E%3Cpath d='M2 16h28M16 2v28M6 6c6 4 6 16 0 20M26 6c-6 4-6 16 0 20' fill='none' stroke='%230b0b0b' stroke-width='1.6'/%3E%3C/svg%3E">
+<style>
+/* Softer than the NFL and MLB dashboards it started from: hairlines instead of boxes, big radii, no tiles inside
+   cards, numbers doing the work. Same tokens, so it still sits beside them. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #ffffff; --surface-2: #f3f2ee; --ink: #101010; --ink-2: #4f4e4a; --muted: #8b8982;
+  --grid: #e7e6e0; --axis: #cfcdc4; --border: rgba(16, 16, 16, 0.07); --hair: rgba(16, 16, 16, 0.08);
+  --shadow: 0 1px 1px rgba(16, 16, 16, 0.03), 0 12px 32px -14px rgba(16, 16, 16, 0.14);
+  --away: #2f7be0; --home: #ee6a35; --accent: #17a673; --good: #0ca30c; --good-text: #07700a; --critical: #d23f3f;
+  --warn: #b06f00; --btn-bg: #101010; --btn-ink: #fbfbf9; --radius: 20px; --radius-sm: 12px;
+  --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #161616; --surface-2: #202020; --ink: #f6f6f3; --ink-2: #c4c3ba; --muted: #8b8982;
+    --grid: #262626; --axis: #38383a; --border: rgba(255, 255, 255, 0.07); --hair: rgba(255, 255, 255, 0.08);
+    --shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 16px 36px -16px rgba(0, 0, 0, 0.7);
+    --away: #4b92ee; --home: #f0763f; --accent: #1fb583; --good-text: #35cc3f; --warn: #e5a63f;
+    --btn-bg: #f6f6f3; --btn-ink: #161616;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; padding: 0; }
+body { background: var(--page); color: var(--ink); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body::before { content: ""; position: fixed; inset: 0 0 auto 0; height: 320px; pointer-events: none; z-index: -1;
+  background: radial-gradient(900px 240px at 50% -90px, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%); }
+a { color: inherit; }
+.num { font-variant-numeric: tabular-nums; }
+main { max-width: 1120px; margin: 0 auto; padding: 26px 22px 96px; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -0.025em; font-weight: 700; line-height: 1.2; }
+h2 { font-size: 15px; margin: 0 0 12px; letter-spacing: -0.005em; font-weight: 650; }
+h3 { font-size: 11.5px; margin: 0 0 8px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.sub { color: var(--muted); font-size: 13.5px; margin: 4px 0 20px; }
+.meta { color: var(--muted); font-size: 13.5px; margin: 4px 0 18px; }
+.head { display: flex; flex-direction: column; }
+.page-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 22px; }
+.grid { display: grid; gap: 16px; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); align-items: start; }
+.grid-games { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.btn { border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 14px;
+  font: inherit; font-size: 13.5px; cursor: pointer; line-height: 1.3; text-decoration: none; display: inline-block;
+  transition: background .15s, border-color .15s; }
+.btn:hover { background: var(--surface-2); }
+.input { border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 10px 18px;
+  font: inherit; font-size: 14px; width: 100%; max-width: 420px; box-shadow: var(--shadow); transition: border-color .15s, box-shadow .15s; }
+.input::placeholder { color: var(--muted); }
+.input:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); font-size: 12px; color: var(--ink-2); }
+.tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; padding: 2px 7px; border-radius: 999px;
+  background: var(--surface-2); color: var(--ink-2); margin-left: 6px; white-space: nowrap; font-weight: 600; }
+.tag.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--ink); }
+.dim { color: var(--muted); }
+.win { color: var(--good-text); font-weight: 600; }
+.loss { color: var(--critical); font-weight: 600; }
+.section-gap { margin-top: 16px; }
+.notice { color: var(--muted); font-size: 13.5px; padding: 28px 0; text-align: center; }
+
+/* tabs */
+.tabs { display: flex; gap: 4px; margin: 0 0 18px; padding: 4px; width: max-content; border-radius: 999px; background: var(--surface-2); }
+.tabs a { border-radius: 999px; padding: 6px 16px; font-size: 13.5px; text-decoration: none; color: var(--ink-2); font-weight: 550;
+  transition: background .2s var(--ease), color .2s; }
+.tabs a:hover { color: var(--ink); }
+.tabs a.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+html.embedded .tabs { display: none; }          /* inside the hub the navigation pane carries them */
+
+/* the slate */
+.day { margin-top: 30px; }
+.day-head { display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px; font-size: 15px; }
+.day-head small { color: var(--muted); font-weight: 500; font-size: 13.5px; }
+.day-head .count { margin-left: auto; color: var(--muted); font-weight: 500; font-size: 12.5px; }
+.game-card { display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: inherit; padding: 18px 20px 16px;
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .2s; }
+.game-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--ink) 16%, transparent);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04), 0 20px 42px -18px rgba(0, 0, 0, 0.3); }
+.game-card.is-started { opacity: .7; }
+.gc-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); }
+.gc-props { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.gc-props::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: .45; }
+.gc-props.on { color: var(--ink-2); }
+.gc-props.on::before { background: var(--accent); opacity: 1; }
+.gc-teams { display: grid; gap: 6px; }
+.gc-team { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.gc-code { font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
+.gc-name { color: var(--muted); font-size: 12.5px; margin-left: 9px; font-weight: 400; }
+.gc-score { font-size: 25px; font-weight: 650; letter-spacing: -0.025em; line-height: 1.1; }
+.pbar-wrap { display: grid; gap: 9px; }
+.pbar { position: relative; display: flex; gap: 3px; height: 6px; }
+.pbar i { display: block; height: 100%; transform-origin: left center; animation: grow .8s var(--ease) backwards; }
+.pbar .a { background: var(--away); border-radius: 999px 3px 3px 999px; }
+.pbar .h { background: var(--home); border-radius: 3px 999px 999px 3px; }
+.pbar .mk { position: absolute; top: -4px; width: 2px; height: 14px; border-radius: 2px; background: var(--ink); opacity: .8; transform: translateX(-1px); }
+.pbar-lbl { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.pbar-lbl .mkt { color: var(--muted); }
+.gc-lines { display: grid; grid-template-columns: 78px 1fr 1fr; gap: 4px 12px; font-size: 13px; padding-top: 13px; border-top: 1px solid var(--hair); align-items: baseline; }
+.gc-lines .hd { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.gc-lines .lbl { color: var(--muted); font-size: 12.5px; }
+.gc-lines .v { font-weight: 600; }
+.off { color: var(--warn); }
+
+/* a game */
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); text-decoration: none; font-size: 13.5px;
+  padding: 5px 12px 5px 8px; margin-left: -8px; border-radius: 999px; transition: background .15s, color .15s; }
+.back:hover { background: var(--surface-2); color: var(--ink); }
+.g-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 8px 0 0; }
+.sb { padding: 26px 28px 22px; }
+.sb-teams { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 18px; margin-bottom: 20px; }
+.sb-team { display: grid; gap: 1px; }
+.sb-team.home { text-align: right; justify-items: end; }
+.sb-code { font-size: 14px; font-weight: 700; letter-spacing: .04em; color: var(--ink-2); }
+.sb-code i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+.sb-score { font-size: 46px; font-weight: 650; letter-spacing: -0.035em; line-height: 1.05; }
+.sb-win { font-size: 13.5px; color: var(--ink-2); }
+.sb-mid { color: var(--muted); font-size: 13px; padding-bottom: 10px; }
+.compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 22px; border-top: 1px solid var(--hair); }
+.cmp { padding: 16px 20px 0 0; }
+.cmp + .cmp { padding-left: 22px; border-left: 1px solid var(--hair); }
+.cmp dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; margin: 0; }
+.cmp dt { color: var(--muted); font-size: 12.5px; }
+.cmp dd { margin: 0; font-weight: 650; text-align: right; font-variant-numeric: tabular-nums; }
+.cmp dd.book { color: var(--ink-2); font-weight: 550; }
+.cmp dd.off { color: var(--warn); }
+.notice-inline { color: var(--ink-2); font-size: 13.5px; margin: 16px 2px 0; padding-left: 12px; border-left: 2px solid var(--warn); }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 10px 10px; text-align: right; border-bottom: 1px solid var(--hair); vertical-align: middle; }
+th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; padding-bottom: 8px; }
+th:first-child, td:first-child { text-align: left; }
+tbody tr { transition: background .12s; }
+tbody tr:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+tbody tr:last-child td { border-bottom: 0; }
+.table-wrap { overflow-x: auto; }
+caption { caption-side: top; text-align: left; color: var(--muted); font-size: 12.5px; padding: 0 0 8px; }
+details.more { margin-top: 12px; }
+details.more > summary, details.how > summary { cursor: pointer; color: var(--ink-2); font-size: 13px; padding: 4px 0; }
+
+/* kpis: figures with room around them, no tiles */
+.kpis { display: grid; gap: 22px 24px; grid-template-columns: repeat(auto-fit, minmax(138px, 1fr)); }
+.kpi .k { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.kpi .v { font-size: 28px; font-weight: 650; letter-spacing: -0.025em; line-height: 1.15; margin-top: 2px; }
+.kpi .n { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+
+/* players */
+.pp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.pp-head h2 { margin: 0; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; }
+.dot.away { background: var(--away); } .dot.home { background: var(--home); }
+.switch { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2);
+  border-radius: 999px; padding: 5px 12px 5px 8px; font: inherit; font-size: 12.5px; cursor: pointer; transition: background .15s, color .15s; }
+.switch i { width: 26px; height: 15px; border-radius: 999px; background: var(--axis); position: relative; transition: background .2s; }
+.switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: transform .2s var(--ease); }
+.switch[aria-pressed="true"] { color: var(--ink); }
+.switch[aria-pressed="true"] i { background: var(--accent); }
+.switch[aria-pressed="true"] i::after { transform: translateX(11px); }
+.legend { color: var(--muted); font-size: 12.5px; margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.legend b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+.player-head, .player-row { display: grid; align-items: center; gap: 6px 10px; margin: 0 -10px; padding: 10px 10px; border-radius: 12px;
+  grid-template-columns: minmax(130px, 1.8fr) 38px repeat(4, minmax(62px, 1fr)) 30px; }
+.player-head { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; padding-top: 2px; padding-bottom: 6px; }
+.player-head > span:not(:first-child), .player-row .pc { text-align: right; }
+.player-row { transition: background .15s; background-image: linear-gradient(var(--hair), var(--hair)); background-size: calc(100% - 20px) 1px;
+  background-position: 10px 0; background-repeat: no-repeat; }
+.player-row:hover { background-color: var(--surface-2); }
+.player-name { font-weight: 600; font-size: 14.5px; line-height: 1.3; }
+.player-sub { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+.pc { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; gap: 1px; }
+.pc strong { font-size: 15.5px; font-weight: 650; }
+.pc small { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.pc small.off { color: var(--warn); font-weight: 600; }
+.pc small.form { color: var(--ink-2); }
+.hide-form .pc .form { display: none; }
+.find-row { display: grid; align-items: center; gap: 8px; grid-template-columns: minmax(150px, 1.6fr) minmax(110px, 1fr) repeat(3, 58px) 30px;
+  padding: 9px 10px; margin: 0 -10px; border-radius: 12px; transition: background .15s; }
+.find-row:hover { background: var(--surface-2); }
+
+/* the form table inside a player's sheet */
+.form-table { font-size: 13px; }
+.form-table th, .form-table td { padding: 7px 6px; text-align: center; border-bottom: 1px solid var(--hair); }
+.form-table th:first-child, .form-table td:first-child { text-align: left; padding-left: 0; font-weight: 600; }
+.form-table th small { display: block; font-size: 10px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.form-table .old { opacity: .5; }
+.form-table .over { color: var(--good-text); font-weight: 650; }
+.form-table .under { color: var(--critical); }
+.form-table .sep { border-left: 1px solid var(--hair); }
+.form-table .strong { font-weight: 650; }
+.form-key { color: var(--muted); font-size: 12px; margin: 8px 0 4px; line-height: 1.45; }
+.sk-extra { padding: 4px 16px 8px; border-bottom: 1px solid var(--hair); overflow-x: auto; }
+
+/* the record */
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .tick { fill: var(--muted); font-size: 10px; }
+.chart .grid-line { stroke: var(--grid); stroke-width: 1; }
+.chart .axis-line { stroke: var(--axis); stroke-width: 1; }
+.chart .marker { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 4 3; }
+.chart circle { transition: r .15s; }
+.chart circle:hover { r: 6.5; }
+.key { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.key i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+.lede { font-size: 14px; margin: 0 0 12px; max-width: 80ch; color: var(--ink-2); }
+.foot { color: var(--ink-2); font-size: 13px; line-height: 1.55; margin-top: 28px; max-width: 86ch; }
+.foot p { margin: 8px 0 0; }
+
+/* loading and motion */
+.skeleton { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); margin-top: 56px; }
+.skeleton i { display: block; height: 214px; border-radius: var(--radius); border: 1px solid var(--border);
+  background: linear-gradient(100deg, var(--surface) 30%, var(--surface-2) 50%, var(--surface) 70%); background-size: 220% 100%; animation: shimmer 1.3s linear infinite; }
+@keyframes shimmer { to { background-position: -220% 0; } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+@keyframes grow { from { transform: scaleX(0); } }
+#view > * { animation: rise .45s var(--ease) backwards; }
+#view > *:nth-child(2) { animation-delay: .04s; } #view > *:nth-child(3) { animation-delay: .08s; }
+#view > *:nth-child(4) { animation-delay: .12s; } #view > *:nth-child(n+5) { animation-delay: .16s; }
+.grid-games > .game-card { animation: rise .5s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 30ms); }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (max-width: 720px) { html.embedded .tabs { display: flex; } }       /* the navigation pane is a tab bar on a phone */
+@media (max-width: 760px) {
+  main { padding: 18px 14px 96px; } h1 { font-size: 22px; }
+  .card { padding: 16px 16px; }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .sb { padding: 20px 18px 18px; } .sb-score { font-size: 36px; }
+  .sb-win { font-size: 12.5px; }
+  .compare { margin-top: 16px; }
+  .cmp { padding: 12px 8px 0 0; } .cmp + .cmp { padding-left: 12px; }
+  .cmp dl { display: block; }
+  .cmp dt { margin-top: 6px; font-size: 11.5px; }
+  .cmp dd { text-align: left; font-size: 14px; }
+  .player-head, .player-row { gap: 6px; grid-template-columns: minmax(82px, 1.5fr) repeat(3, minmax(46px, 1fr)) 26px; }
+  .player-head .c-min, .player-head .c-tpm, .player-row .c-min, .player-row .c-tpm { display: none; }
+  .find-row { grid-template-columns: minmax(120px, 1.5fr) repeat(3, 52px) 28px; }
+  .find-row .f-game { display: none; }
+}
+</style>
+<script>if (window.self !== window.top) document.documentElement.classList.add('embedded');</script>
+</head>
+<body>
+<main id="view"><div class="skeleton" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></main>
+<script src="slipkit.js?v=20261023200329"></script>
+<script>
+(() => {
+  'use strict';
+  const view = document.getElementById('view');
+  // Without the slip kit (it did not load) the pages still show everything; there is just nothing to click.
+  const SK = window.SlipKit || { attach() {}, addButton: () => document.createTextNode('') };
+  const DISAGREE = 0.15;                       // the same cut-off the legs use for "off book"
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private window */ } },
+  };
+  const state = { doc: null, legs: [], byGid: new Map(), games: [], names: {}, q: '', form: store.get('nba.form') !== '0' };
+
+  // ------------------------------------------------------------------ helpers
+  function el(tag, props = {}, ...kids) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'class') n.className = v;
+      else if (k === 'text') n.textContent = v;
+      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v);
+    }
+    for (const kid of kids.flat()) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      n.appendChild(typeof kid === 'object' ? kid : document.createTextNode(String(kid)));
+    }
+    return n;
+  }
+  function render(...kids) {
+    view.classList.toggle('hide-form', !state.form);
+    view.replaceChildren(...kids.flat().filter(k => k !== null && k !== undefined && k !== false));
+  }
+  const pct = p => (p === null || p === undefined || Number.isNaN(p) ? '–' : `${Math.round(100 * p)}%`);
+  const num = (x, d = 1) => (x === null || x === undefined || Number.isNaN(x) ? '–' : Number(x).toFixed(d));
+  const signed = (x, d = 1) => (x === null || x === undefined || Number.isNaN(x) ? '–' : (x > 0 ? '+' : '') + Number(x).toFixed(d));
+  const fmtOdds = o => (o === null || o === undefined ? '–' : (o > 0 ? `+${o}` : `−${-o}`));
+  const implied = o => (o > 0 ? 100 / (o + 100) : -o / (-o + 100));
+  const tipTime = g => { const t = new Date(g.kickoff); return isFinite(t) ? t : null; };
+  const started = g => { const t = tipTime(g); return !!t && t <= new Date(); };
+  const when = g => { const t = tipTime(g); return t ? t.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : g.date; };
+  const getJSON = async url => { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error(`${r.status}`); return r.json(); };
+  const pct1 = p => (p === null || p === undefined || Number.isNaN(p) ? '–' : `${(100 * p).toFixed(1)}%`);
+  const tabs = on => el('nav', { class: 'tabs', 'aria-label': 'NBA' },
+    el('a', { href: '#/', class: on === 'slate' ? 'on' : null, text: 'Slate' }),
+    el('a', { href: '#/record', class: on === 'record' ? 'on' : null, text: 'Record' }));
+  const dayKey = t => `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`;
+  function dayParts(t) {
+    const now = new Date(), tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const name = t.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+    if (dayKey(t) === dayKey(now)) return ['Today', name];
+    if (dayKey(t) === dayKey(tomorrow)) return ['Tomorrow', name];
+    return [name, ''];
+  }
+  const dayName = iso => new Date(`${iso}T12:00:00`).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  const shortDay = iso => new Date(`${iso}T12:00:00`).toLocaleDateString([], { month: 'numeric', day: 'numeric' });
+  const hasProps = g => g.players.some(p => Object.keys(p.book || {}).length);
+  const noProps = g => (hasProps(g) ? null : el('p', { class: 'notice-inline',
+    text: 'DraftKings has not posted props for this game yet (it usually does the morning of the game). These are the model’s own numbers, '
+        + 'built without the book’s idea of who plays how long, so expect them to move when the props go up.' }));
+
+  function buildTable(headers, rows, opts = {}) {
+    return el('table', { class: 'num' },
+      opts.caption ? el('caption', { text: opts.caption }) : null,
+      el('thead', {}, el('tr', {}, headers.map(h => el('th', { text: h })))),
+      el('tbody', {}, rows.map(r => el('tr', {}, r.map(cell => {
+        if (cell && typeof cell === 'object' && cell.nodeType) return el('td', {}, cell);
+        if (cell && typeof cell === 'object') return el('td', { class: cell.class || null, text: cell.text });
+        return el('td', { text: cell === null || cell === undefined ? '–' : String(cell) });
+      })))));
+  }
+  const kpi = (k, v, n) => el('div', { class: 'kpi' }, el('div', { class: 'k', text: k }),
+    el('div', { class: 'v num', text: v }), n ? el('div', { class: 'n', text: n }) : null);
+
+  // ------------------------------------------------------------------ data
+  async function load() {
+    const [doc, legsDoc] = await Promise.all([getJSON('data/nba/projections.json'),
+                                              getJSON('data/nba/legs.json').catch(() => null)]);
+    state.doc = doc;
+    state.names = doc.names || {};
+    state.games = (doc.games || []).slice().sort((a, b) => (a.kickoff || '').localeCompare(b.kickoff || '') || a.game.localeCompare(b.game));
+    if (legsDoc) {
+      const kick = {};
+      for (const g of legsDoc.games || []) kick[String(g.gid)] = g.kickoff;
+      const notes = legsDoc.notes || [];
+      for (const l of legsDoc.legs || []) {
+        const text = l.note != null ? (notes[l.note] || '') : '';
+        const leg = { sig: `nba|${l.gid}|${l.label}`, gid: String(l.gid), market: l.market, label: l.label, p: l.p, line: l.line,
+                      side: l.side, team: l.team, pid: l.pid, f: l.f, odds: l.book ? l.book.odds : null, book: l.book ? l.book.name : null,
+                      flagged: /^Careful:/.test(text),
+                      started: kick[String(l.gid)] ? new Date(kick[String(l.gid)]) <= new Date() : false };
+        if (!state.byGid.has(leg.gid)) state.byGid.set(leg.gid, []);
+        state.byGid.get(leg.gid).push(leg);
+      }
+    }
+  }
+  const legsOf = gid => state.byGid.get(String(gid)) || [];
+  const lineLegs = (gid, markets) => legsOf(gid).filter(l => markets.includes(l.market));
+
+  // ------------------------------------------------------------------ a game's numbers
+  /** The book's chance of the home side, with its margin taken out, from the two moneyline prices. */
+  function marketHome(g) {
+    const ml = lineLegs(g.gid, ['ML']);
+    const a = ml.find(l => l.team === g.away), h = ml.find(l => l.team === g.home);
+    let oa = a && a.odds, oh = h && h.odds;
+    if ((oa == null || oh == null) && g.book && g.book.ml) [oa, oh] = g.book.ml;
+    if (oa == null || oh == null) return null;
+    const pa = implied(oa), ph = implied(oh);
+    return ph / (pa + ph);
+  }
+  /** Who the model has laying how many points: "OKC −7.1". */
+  const modelSpread = g => (Math.abs(g.margin) < 0.05 ? 'PK' : `${g.margin > 0 ? g.home : g.away} −${num(Math.abs(g.margin))}`);
+  /** The same for DraftKings' line, which is the home side's spread. */
+  function bookSpread(g) {
+    const s = g.book && g.book.spread;
+    if (s === null || s === undefined) return null;
+    return s === 0 ? 'PK' : `${s < 0 ? g.home : g.away} −${Math.abs(s)}`;
+  }
+  const bookTotal = g => (g.book && g.book.total !== null && g.book.total !== undefined ? String(g.book.total) : null);
+  /** How many points apart the model's margin and DraftKings' are, or null. Replayed on 2024-26, at 6 or more the line was the
+      better guide (its margin error 9.8 against the model's 12.4), so those get an amber number. */
+  const lineGap = g => {
+    const s = g.book && g.book.spread;
+    return s === null || s === undefined ? null : Math.abs(g.margin + s);
+  };
+  const FAR = 6;
+  const gapTip = gap => `The model and DraftKings are ${num(gap)} points apart on this one. Replayed on 2024-26, at 6 or more apart the line was the closer guide.`;
+
+  /** Both teams' chances as a bar, with a tick where DraftKings has the split. */
+  function probBar(g, mk) {
+    const awayP = 1 - g.p_home, homeP = g.p_home;
+    return el('div', { class: 'pbar-wrap' },
+      el('div', { class: 'pbar', role: 'img', 'aria-label': `${g.away} ${pct(awayP)} to win, ${g.home} ${pct(homeP)}` },
+        el('i', { class: 'a', style: `width:calc(${(awayP * 100).toFixed(2)}% - 1.5px)` }),
+        el('i', { class: 'h', style: `width:calc(${(homeP * 100).toFixed(2)}% - 1.5px)` }),
+        mk === null ? null : el('span', { class: 'mk', style: `left:${((1 - mk) * 100).toFixed(2)}%`,
+                                          title: `DraftKings: ${g.away} ${pct(1 - mk)}, ${g.home} ${pct(mk)}, its margin taken out` })),
+      el('div', { class: 'pbar-lbl num' },
+        el('span', {}, el('b', { text: g.away }), ` ${pct(awayP)}`, mk === null ? null : el('span', { class: 'mkt', text: ` · market ${pct(1 - mk)}` })),
+        el('span', {}, mk === null ? null : el('span', { class: 'mkt', text: `market ${pct(mk)} · ` }), `${pct(homeP)} `, el('b', { text: g.home }))));
+  }
+
+  // ------------------------------------------------------------------ the slate
+  function gameCard(g, i) {
+    const nameOf = c => state.names[c] || '';
+    const mk = marketHome(g);
+    const props = g.players.filter(p => Object.keys(p.book || {}).length).length;
+    const team = (code, score) => el('div', { class: 'gc-team' },
+      el('div', {}, el('span', { class: 'gc-code', text: code }), el('span', { class: 'gc-name', text: nameOf(code) })),
+      el('span', { class: 'gc-score num', text: num(score) }));
+    const bs = bookSpread(g), bt = bookTotal(g);
+    const gap = lineGap(g), far = gap !== null && gap >= FAR;
+    const sp = (text) => el('span', { class: `v num${far ? ' off' : ''}`, title: far ? gapTip(gap) : null, text });
+    return el('a', { class: `card game-card${started(g) ? ' is-started' : ''}`, href: `#/game/${encodeURIComponent(g.gid)}`, style: `--i:${Math.min(i, 12)}` },
+      el('div', { class: 'gc-top' },
+        el('span', {}, when(g), started(g) ? el('span', { class: 'tag warn', text: 'started' }) : null),
+        props ? el('span', { class: 'gc-props on', text: `${props} players with lines` })
+              : el('span', { class: 'gc-props', title: 'DraftKings has not posted this game’s player props yet; it usually does the morning of the game.',
+                             text: 'props not up yet' })),
+      el('div', { class: 'gc-teams' }, team(g.away, g.score[0]), team(g.home, g.score[1])),
+      probBar(g, mk),
+      el('div', { class: 'gc-lines' },
+        el('span'), el('span', { class: 'hd', text: 'Spread' }), el('span', { class: 'hd', text: 'Total' }),
+        el('span', { class: 'lbl', text: 'Model' }), sp(modelSpread(g)), el('span', { class: 'v num', text: num(g.total) }),
+        el('span', { class: 'lbl', text: 'DraftKings' }), sp(bs || '–'), el('span', { class: 'v num', text: bt || '–' })));
+  }
+
+  // ------------------------------------------------------------------ a player: projection, line, and how he has been playing
+  const STAT_COLS = [['pts', 'Pts'], ['reb', 'Reb'], ['ast', 'Ast'], ['tpm', '3PM']];
+  const IX = { min: 3, pts: 4, reb: 5, ast: 6, tpm: 7, stl: 8, blk: 9, tov: 10 };      // where each number sits in a last-five row
+  const PARTS = { pr: ['pts', 'reb'], pa: ['pts', 'ast'], ra: ['reb', 'ast'], pra: ['pts', 'reb', 'ast'], stlblk: ['stl', 'blk'] };
+  const oneGame = (row, stat) => (PARTS[stat] ? PARTS[stat].reduce((a, s) => a + row[IX[s]], 0) : row[IX[stat]]);
+  /** His average over the games on record (up to five): the games and the average, or null. */
+  function lastFive(p, stat) {
+    const rows = p.l5 || [];
+    if (!rows.length) return null;
+    return { n: rows.length, avg: rows.reduce((a, r) => a + oneGame(r, stat), 0) / rows.length };
+  }
+  const seasonStart = () => {
+    const d = state.doc && state.doc.generated ? new Date(state.doc.generated) : new Date();
+    return `${d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1}-08-01`;
+  };
+
+  function statCell(p, stat) {
+    const s = p.stats[stat];
+    if (!s) return el('div', { class: 'pc c-' + stat }, '–');
+    const b = (p.book || {})[stat];
+    const f = lastFive(p, stat);
+    const off = b && Math.abs(b.over - b.book) >= DISAGREE;
+    const tip = `Simulated ${stat}: ${s[0]} on average, 80% of the time between ${s[1]} and ${s[2]}; the model would post ${s[3]}.`
+      + (b ? ` DraftKings: over ${b.line} at ${fmtOdds(b.odds[0])} / under ${fmtOdds(b.odds[1])}, ${pct(b.book)} for the over without its margin; the simulation says ${pct(b.over)}.` : '')
+      + (f ? ` Last ${f.n} games: ${num(f.avg)}.` : '');
+    return el('div', { class: 'pc c-' + stat, title: tip }, el('strong', { class: 'num', text: num(s[0]) }),
+      b ? el('small', { class: `num${off ? ' off' : ''}`, text: `o${b.line} · ${pct(b.over)}` }) : null,
+      f ? el('small', { class: 'num form', text: `L${f.n} ${num(f.avg)}` }) : null);
+  }
+
+  /** What opens when a player is clicked, above his lines: his last five games against the line, the model and the book. */
+  function formBlock(p) {
+    const games = (p.l5 || []).slice().reverse();                       // oldest first, so the newest sits beside the averages
+    if (!games.length) return el('p', { class: 'form-key', text: 'No games on record for him yet.' });
+    const start = seasonStart();
+    const anyNew = games.some(g => g[0] >= start);                      // fade last season's games only where this season's sit beside them
+    const isOld = g => anyNew && g[0] < start;
+    const rows = [['min', 'Min'], ['pts', 'Pts'], ['reb', 'Reb'], ['ast', 'Ast'], ['tpm', '3PM'], ['pra', 'PRA']];
+    const cls = (v, line) => (line === null || line === undefined ? '' : v > line ? 'over' : v < line ? 'under' : '');
+    const head = el('tr', {}, el('th', { text: '' }),
+      games.map(g => el('th', { class: isOld(g) ? 'old' : null, title: g[0] }, shortDay(g[0]), el('small', { text: `${g[2] ? 'vs' : '@'} ${g[1]}` }))),
+      el('th', { class: 'sep' }, 'Avg', el('small', { text: `last ${games.length}` })),
+      el('th', {}, 'Model', el('small', { text: 'projected' })),
+      el('th', {}, 'Model', el('small', { text: 'line' })),
+      el('th', {}, 'DK', el('small', { text: 'line' })));
+    const body = rows.map(([stat, label]) => {
+      const line = stat === 'min' ? null : (((p.book || {})[stat] || {}).line ?? null);
+      const avg = games.reduce((a, g) => a + oneGame(g, stat), 0) / games.length;
+      const proj = stat === 'min' ? p.min : (p.stats[stat] || [])[0];
+      const fair = stat === 'min' ? null : (p.stats[stat] || [])[3];
+      return el('tr', {}, el('td', { text: label }),
+        games.map(g => el('td', { class: `num ${isOld(g) ? 'old' : ''} ${cls(oneGame(g, stat), line)}`, text: String(oneGame(g, stat)) })),
+        el('td', { class: `num sep strong ${cls(avg, line)}`, text: num(avg) }),
+        el('td', { class: `num strong ${cls(proj, line)}`, text: proj === undefined ? '–' : num(proj) }),
+        el('td', { class: 'num', text: fair === null || fair === undefined ? '–' : String(fair) }),
+        el('td', { class: 'num', text: line === null ? '–' : String(line) }));
+    });
+    const note = !anyNew ? ' All five are from last season: this season has barely started for him.'
+      : games.some(g => g[0] < start) ? ' Faded columns are from last season.' : '';
+    return el('div', {}, el('div', { class: 'table-wrap' }, el('table', { class: 'form-table' }, el('thead', {}, head), el('tbody', {}, body))),
+      el('p', { class: 'form-key', text: `Newest game on the right. Green is over DraftKings’ line, red under.${note} `
+        + '“Model line” is where the model has the over closest to even.' }));
+  }
+  const attachPlayer = (node, g, p) => SK.attach(node, () => ({ sport: 'nba', gid: g.gid, who: { pid: p.pid }, name: p.name, title: p.name,
+    sub: `${p.team} · ${g.game} · ${when(g)}`, legs: legsOf(g.gid), extra: () => formBlock(p) }));
+
+  function playerRow(g, p) {
+    const row = el('div', { class: 'player-row' },
+      el('div', {}, el('div', { class: 'player-name' }, p.name,
+          p.status ? el('span', { class: 'tag warn', text: 'day-to-day' }) : null,
+          p.thin ? el('span', { class: 'tag', title: 'Little game history to build his rates from', text: 'thin' }) : null),
+        el('div', { class: 'player-sub', text: p.p_play < 0.95 ? `plays in ${pct(p.p_play)} of simulations` : '' })),
+      el('div', { class: 'pc c-min' }, el('strong', { class: 'num', text: num(p.min, 0) })),
+      STAT_COLS.map(([s]) => statCell(p, s)),
+      el('span', { class: 'sk-plus', 'aria-hidden': 'true', text: '+' }));
+    attachPlayer(row, g, p);
+    return row;
+  }
+  const playerHead = () => el('div', { class: 'player-head' }, el('span', { text: 'Player' }),
+    el('span', { class: 'c-min', text: 'Min' }), STAT_COLS.map(([s, h]) => el('span', { class: 'c-' + s, text: h })), el('span'));
+
+  // ------------------------------------------------------------------ pages
+  function slate() {
+    const games = state.games;                                    // a game that has started stays, tagged, until the next run drops it
+    const open = games.filter(g => !started(g));                  // but only the ones still to play have lines to put in a slip
+    const input = el('input', { class: 'input', type: 'search', id: 'q', placeholder: 'Find a player or a team', value: state.q,
+                                'aria-label': 'Find a player or a team' });
+    const results = el('div', { id: 'results' });
+    const draw = () => {
+      const terms = input.value.trim().toLowerCase().split(/[\s,]+/).filter(Boolean);
+      state.q = input.value;
+      if (!terms.length) { results.replaceChildren(); return; }
+      const rows = [];
+      for (const g of open) for (const p of g.players) {
+        const hay = `${p.name} ${p.team} ${g.game}`.toLowerCase();
+        if (terms.every(t => hay.includes(t))) rows.push([g, p]);
+      }
+      results.replaceChildren(el('section', { class: 'card', style: 'margin-bottom:16px' },
+        el('h2', { text: rows.length ? `${rows.length} player${rows.length === 1 ? '' : 's'}` : 'No player or team matches that' }),
+        ...(rows.length ? [el('p', { class: 'legend', text: 'Click a player for his lines, his last five games, and a way to put one in your slip.' })] : []),
+        ...rows.slice(0, 40).map(([g, p]) => {
+          const r = el('div', { class: 'find-row' },
+            el('div', {}, el('div', { class: 'player-name', text: p.name }), el('div', { class: 'player-sub', text: p.team })),
+            el('div', { class: 'f-game player-sub', text: `${g.game} · ${when(g)}` }),
+            ['pts', 'reb', 'ast'].map(s => el('div', { class: 'pc' }, el('strong', { class: 'num', text: num((p.stats[s] || [])[0]) }),
+              el('small', { text: s }))),
+            el('span', { class: 'sk-plus', 'aria-hidden': 'true', text: '+' }));
+          attachPlayer(r, g, p);
+          return r;
+        })));
+    };
+    input.addEventListener('input', draw);
+    const days = [];
+    for (const g of games) {
+      const t = tipTime(g) || new Date(`${g.date}T12:00:00`);
+      let day = days[days.length - 1];
+      if (!day || day.key !== dayKey(t)) { day = { key: dayKey(t), parts: dayParts(t), games: [] }; days.push(day); }
+      day.games.push(g);
+    }
+    let n = 0;
+    const updated = state.doc.generated ? new Date(state.doc.generated).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+    render(
+      tabs('slate'),
+      el('header', { class: 'head' }, el('h1', { text: 'NBA' }),
+        el('p', { class: 'meta', text: `${open.length} game${open.length === 1 ? '' : 's'} to play${updated ? ` · updated ${updated}` : ''}`
+          + ' · every game simulated 4,000 times, with or without DraftKings’ props' })),
+      el('div', { style: 'margin-bottom:6px' }, input),
+      results,
+      days.length ? days.map(day => el('section', { class: 'day' },
+                      el('h2', { class: 'day-head' }, day.parts[0], day.parts[1] ? el('small', { text: day.parts[1] }) : null,
+                        el('span', { class: 'count', text: `${day.games.length} game${day.games.length === 1 ? '' : 's'}` })),
+                      el('div', { class: 'grid grid-games' }, day.games.map(g => gameCard(g, n++)))))
+                  : el('p', { class: 'notice', text: 'No games to show yet: the simulations run a few times a day, and a game drops off once it starts.' }),
+      foot());
+    draw();
+  }
+
+  function linesTable(g) {
+    const main = lineLegs(g.gid, ['ML', 'SPREAD', 'TOTAL']);
+    if (!main.length) return null;
+    const order = { ML: 0, SPREAD: 1, TOTAL: 2 };
+    const rows = (ls) => ls.sort((a, b) => order[a.market] - order[b.market] || (a.side === 'under') - (b.side === 'under')
+                                          || (a.team === g.home) - (b.team === g.home))
+      .map(l => [l.label + (l.flagged ? ' · off book' : ''), pct(l.p), fmtOdds(l.odds), SK.addButton(l)]);
+    const alts = lineLegs(g.gid, ['ALT_SPREAD', 'ALT_TOTAL']);
+    const head = ['Bet', 'Model', 'DraftKings', ''];
+    return el('section', { class: 'card section-gap' },
+      el('h2', { text: 'Bets' }),
+      el('div', { class: 'table-wrap' }, buildTable(head, rows(main), { caption: 'The model’s chance for each, and DraftKings’ price where ESPN carries one. + puts it in your slip.' })),
+      alts.length ? el('details', { class: 'more' }, el('summary', { text: `Alternate spreads and totals (${alts.length})` }),
+        el('div', { class: 'table-wrap' }, buildTable(head, alts.sort((a, b) => a.market.localeCompare(b.market)
+          || (a.team === b.team ? (a.line - b.line) : String(a.team).localeCompare(String(b.team)))
+          || (a.side === 'under') - (b.side === 'under')).map(l => [l.label, pct(l.p), fmtOdds(l.odds), SK.addButton(l)])))) : null);
+  }
+
+  function playerPanel(g, code, cls) {
+    const players = g.players.filter(p => p.team === code);
+    return el('section', { class: 'card' },
+      el('h2', { class: 'pp-title' }, el('i', { class: `dot ${cls}` }), `${state.names[code] || code}`),
+      playerHead(),
+      players.length ? players.map(p => playerRow(g, p)) : el('p', { class: 'notice', text: 'No projections for this team yet.' }));
+  }
+
+  /** The switch that shows or hides the last-five line under every number. */
+  function formSwitch() {
+    const b = el('button', { class: 'switch', type: 'button', 'aria-pressed': String(state.form), title: 'Show each player’s average over his last five games under his numbers' },
+      el('i'), 'Last 5 games');
+    b.addEventListener('click', () => {
+      state.form = !state.form;
+      store.set('nba.form', state.form ? '1' : '0');
+      view.classList.toggle('hide-form', !state.form);
+      b.setAttribute('aria-pressed', String(state.form));
+    });
+    return b;
+  }
+
+  function game(gid) {
+    const g = state.games.find(x => String(x.gid) === String(gid));
+    if (!g) { render(el('a', { class: 'back', href: '#/', text: '← Slate' }), el('p', { class: 'notice', text: 'That game is not on the slate any more.' })); return; }
+    const mk = marketHome(g);
+    const names = state.names;
+    const bs = bookSpread(g), bt = bookTotal(g);
+    const side = (code, score, p, mkp, cls) => el('div', { class: `sb-team ${cls}` },
+      el('div', { class: 'sb-code' }, cls === 'away' ? [el('i', { style: 'background:var(--away)' }), code] : [code, el('i', { style: 'background:var(--home);margin:0 0 0 8px' })]),
+      el('div', { class: 'sb-score num', text: num(score) }),
+      el('div', { class: 'sb-win num', text: `${pct(p)} to win${mkp === null ? '' : ` · market ${pct(mkp)}`}` }));
+    const cmp = (title, rows, tip) => el('div', { class: 'cmp', title: tip || null }, el('h3', { text: title }),
+      el('dl', {}, rows.flatMap(([k, v, cls]) => [el('dt', { text: k }), el('dd', { class: cls || null, text: v })])));
+    const favModel = g.p_home >= 0.5 ? g.home : g.away;
+    const farSpread = lineGap(g) !== null && lineGap(g) >= FAR;
+    render(
+      el('a', { class: 'back', href: '#/', text: '← Slate' }),
+      el('div', { class: 'g-head' }, el('h1', { text: `${g.away} at ${g.home}` }),
+        started(g) ? el('span', { class: 'pill', text: 'started' }) : null),
+      el('p', { class: 'sub', text: `${when(g)} · ${names[g.away] || g.away} at ${names[g.home] || g.home}` }),
+      el('section', { class: 'card sb' },
+        el('div', { class: 'sb-teams' }, side(g.away, g.score[0], 1 - g.p_home, mk === null ? null : 1 - mk, 'away'),
+          el('div', { class: 'sb-mid', text: 'projected' }), side(g.home, g.score[1], g.p_home, mk, 'home')),
+        probBar(g, mk),
+        el('div', { class: 'compare' },
+          cmp('Spread', [['Model', modelSpread(g), farSpread ? 'off' : null], ['DraftKings', bs || '–', farSpread ? 'book off' : 'book']], farSpread ? gapTip(lineGap(g)) : null),
+          cmp('Total', [['Model', num(g.total)], ['DraftKings', bt || '–', 'book']]),
+          cmp('Moneyline', [['Model', `${favModel} ${pct(Math.max(g.p_home, 1 - g.p_home))}`],
+                            ['Market', mk === null ? '–' : `${favModel} ${pct(favModel === g.home ? mk : 1 - mk)}`, 'book']]))),
+      noProps(g),
+      linesTable(g),
+      el('div', { class: 'pp-head section-gap' }, el('h2', { text: 'Players' }), formSwitch()),
+      el('p', { class: 'legend' }, el('span', {}, el('b', { text: '24.6' }), ' the model’s projection'),
+        el('span', {}, el('b', { text: 'o26.5 · 42%' }), ' DraftKings’ line and the model’s chance of the over'),
+        el('span', {}, el('b', { text: 'L5 27.2' }), ' his average over his last five games'),
+        el('span', { text: 'Click a player for the games themselves, the model’s own line, and all his bets.' })),
+      el('div', { class: 'grid grid-2' }, playerPanel(g, g.away, 'away'), playerPanel(g, g.home, 'home')),
+      foot());
+  }
+
+  function foot(here) {
+    return el('details', { class: 'foot how' }, el('summary', { text: 'How to read this page' }),
+      el('p', { text: 'Each number is the simulated average over the simulations the player was in. Under it: DraftKings’ main line for that stat, then how often the simulation has the over hit. '
+        + 'Amber means the two are 15 points or more apart, which has usually been the model being slow on a player’s role rather than an edge.' }),
+      el('p', { text: 'Who plays comes from ESPN’s rosters and injury report; a player listed day-to-day is drawn to play in 60% of the simulations. '
+        + 'Replayed on 2024-26 (about 45,000 player-games, nobody told who plays) it came out within about a point on every stat but points, which ran three light and is nudged.' }),
+      el('p', {}, 'ESPN only carries props for games not yet played, so each line is saved just before tip-off and graded afterwards.',
+        here ? null : [' ', el('a', { href: '#/record', text: 'How it has done so far' }), ', against what happened and against DraftKings, is on the Record tab.']));
+  }
+
+
+  // ------------------------------------------------------------------ the record
+  const rec = r => (r ? `${r.wins}–${r.losses}` : '–');
+  const recKpi = (label, r, note) => (r ? kpi(label, rec(r), `${pct(r.rate)}${note ? ' · ' + note : ''}`) : kpi(label, '–', 'nothing graded yet'));
+  const verdict = (ok, text) => (ok === null || ok === undefined ? { text: text || '–' } : { text: text || (ok ? 'yes' : 'no'), class: ok ? 'win' : 'loss' });
+  const STAT_NAME = { pts: 'Points', reb: 'Rebounds', ast: 'Assists', tpm: 'Threes', stl: 'Steals', blk: 'Blocks', tov: 'Turnovers',
+                      pr: 'Pts + reb', pa: 'Pts + ast', ra: 'Reb + ast', pra: 'Pts + reb + ast', stlblk: 'Stl + blk', all: 'All' };
+
+  /** Predicted margin against what happened, a dot a game: on the diagonal is a perfect call, and the top-right and
+      bottom-left quadrants are the games it at least picked the winner of. */
+  function scatter(points) {
+    const W = 620, H = 340, pad = 40;
+    const limit = Math.max(30, ...points.map(p => Math.max(Math.abs(p.predicted), Math.abs(p.actual))));
+    const round = Math.ceil(limit / 10) * 10;
+    const x = v => pad + ((v + round) / (2 * round)) * (W - pad * 2);
+    const y = v => H - pad - ((v + round) / (2 * round)) * (H - pad * 2);
+    const NS = 'http://www.w3.org/2000/svg';
+    const s = (tag, attrs = {}, ...kids) => {
+      const n = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+      kids.forEach(c => n.appendChild(c));
+      return n;
+    };
+    const text = t => document.createTextNode(String(t));
+    const chart = s('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Predicted margin against actual margin for ${points.length} games.` });
+    for (let v = -round; v <= round; v += 10) {
+      chart.appendChild(s('line', { class: 'grid-line', x1: x(v), x2: x(v), y1: pad, y2: H - pad }));
+      chart.appendChild(s('line', { class: 'grid-line', x1: pad, x2: W - pad, y1: y(v), y2: y(v) }));
+      chart.appendChild(s('text', { class: 'tick', x: x(v), y: H - pad + 14, 'text-anchor': 'middle' }, text(v)));
+      chart.appendChild(s('text', { class: 'tick', x: pad - 8, y: y(v) + 3, 'text-anchor': 'end' }, text(v)));
+    }
+    chart.appendChild(s('line', { class: 'axis-line', x1: pad, x2: W - pad, y1: y(0), y2: y(0) }));
+    chart.appendChild(s('line', { class: 'axis-line', x1: x(0), x2: x(0), y1: pad, y2: H - pad }));
+    chart.appendChild(s('line', { class: 'marker', x1: x(-round), y1: y(-round), x2: x(round), y2: y(round) }));
+    for (const p of points) {
+      const dot = s('circle', { cx: x(Math.max(-round, Math.min(round, p.predicted))), cy: y(Math.max(-round, Math.min(round, p.actual))),
+                                r: 4.5, fill: p.correct ? 'var(--away)' : 'var(--home)', 'fill-opacity': 0.78, tabindex: '0',
+                                'aria-label': `${p.game}: predicted ${p.predicted}, actual ${p.actual}` });
+      dot.appendChild(s('title', {}, text(`${p.game} (${p.date})\npredicted ${signed(p.predicted)}, actual ${signed(p.actual, 0)}`)));
+      chart.appendChild(dot);
+    }
+    chart.appendChild(s('text', { class: 'tick', x: W / 2, y: H - 4, 'text-anchor': 'middle' }, text('predicted home margin')));
+    chart.appendChild(s('text', { class: 'tick', x: 4, y: 12 }, text('actual')));
+    return el('section', { class: 'card chart section-gap' }, el('h2', { text: 'Predicted against actual' }),
+      el('p', { class: 'legend', text: 'Home margin: the model’s number across, the final score down. Hover a dot for the game.' }),
+      chart,
+      el('div', { class: 'key' }, el('span', {}, el('i', { style: 'background:var(--away)' }), 'right winner'),
+        el('span', {}, el('i', { style: 'background:var(--home)' }), 'wrong winner'),
+        el('span', {}, el('i', { style: 'background:var(--accent)' }), 'a perfect call is on the dashed line')));
+  }
+
+  function seasonSection(s, rp) {
+    if (!s.games) {
+      return [el('section', { class: 'card section-gap' }, el('h2', { text: `${s.label || 'This season'}, so far` }),
+        el('p', { class: 'notice', text: 'No game of this season has been graded yet. Each one lands here once it has been played.' }))];
+    }
+    const mk = s.market || {};
+    const out = [
+      el('p', { class: 'lede', text: `${s.label} so far: ${s.games} games, each graded against DraftKings’ line. `
+        + (s.saved ? `${s.saved} were saved before tip-off. ` : '')
+        + (s.rebuilt ? `${s.rebuilt} were played before the board started saving its predictions, so they are rebuilt from the ratings as of that morning (the ratings never look at the line or at anything later). ` : '')
+        + 'A few games say little either way; the long run is further down.' }),
+      el('div', { class: 'card' }, el('div', { class: 'kpis' },
+        recKpi('Straight up', s.straight_up, mk.su != null ? `the line ${pct(mk.su)}` : ''),
+        recKpi('Against the spread', s.spread, 'break-even is 52.4%'),
+        recKpi('Over/under', s.totals),
+        kpi('Brier score', num(s.brier, 3), `the line ${num(mk.brier, 3)} · coin flip ${num(s.brier_baseline, 3)} · lower is better`),
+        kpi('Margin error', num(s.margin_mae, 1), `points, average miss · the line ${num(mk.margin_mae, 1)}`),
+        kpi('Total error', num(s.total_mae, 1), `points, average miss · the line ${num(mk.total_mae, 1)}`))),
+    ];
+    if ((s.scatter || []).length) out.push(scatter(s.scatter));
+    const byDay = (s.by_day || []).slice().reverse().map(d => [dayName(d.date), `${d.wins}–${d.games - d.wins}`,
+      d.spread_games ? `${d.spread_wins}–${d.spread_games - d.spread_wins}` : '–', d.total_games ? `${d.total_wins}–${d.total_games - d.total_wins}` : '–']);
+    out.push(el('section', { class: 'card section-gap' }, el('h2', { text: 'By day' }),
+      el('div', { class: 'table-wrap' }, buildTable(['Day', 'Straight up', 'Spread', 'Total'], byDay))));
+    return out;
+  }
+
+  function propsSection(p) {
+    if (!p || !p.graded) {
+      return el('section', { class: 'card section-gap' }, el('h2', { text: 'Player props against DraftKings' }),
+        el('p', { class: 'notice', text: 'No prop lines graded yet. Each line is saved just before tip-off and graded once the game has been played.' }));
+    }
+    const verdictText = (() => {
+      if (p.diff === null || p.diff === undefined || !p.se) return '';
+      const z = Math.abs(p.diff) / p.se;
+      if (z < 2) return `Too close to call: the two are within ${num(z, 1)} standard errors of each other.`;
+      return `${p.diff > 0 ? 'The model' : 'DraftKings'} has been the better judge, by ${num(Math.abs(p.diff), 3)} of log loss (${num(z, 1)} standard errors). `
+        + 'Lines from one game and one player move together, so that overstates how sure to be.';
+    })();
+    const stat = r => [STAT_NAME[r.stat] || r.stat, r.n.toLocaleString(), pct1(r.model), pct1(r.book), pct1(r.over),
+      { text: num(r.ll_model, 3), class: r.ll_model < r.ll_book ? 'win' : null }, { text: num(r.ll_book, 3), class: r.ll_book < r.ll_model ? 'win' : null }];
+    const gapName = d => (d.from <= -1 ? 'Model 15+ points under the book' : d.to >= 1 ? 'Model 15+ points over the book'
+      : d.from === -0.15 ? 'Model 8 to 15 under' : d.from === 0.08 ? 'Model 8 to 15 over' : 'Within 8 points');
+    return el('section', { class: 'card section-gap' }, el('h2', { text: 'Player props against DraftKings' }),
+      el('p', { class: 'lede', text: `${p.graded.toLocaleString()} lines from ${p.games} games: the main over/under DraftKings had on each player at tip-off, with its margin taken out. `
+        + `A player who did not play is void (${p.void}). Log loss scores how good the chances were, lower is better.` }),
+      verdictText ? el('p', { class: 'lede', text: verdictText }) : null,
+      el('div', { class: 'table-wrap' }, buildTable(['Stat', 'Lines', 'Model said', 'Book said', 'Went over', 'Log loss: model', 'book'],
+        [stat(p.all)].concat((p.by_stat || []).map(stat)))),
+      (p.disagree || []).length ? el('div', { class: 'table-wrap', style: 'margin-top:18px' }, buildTable(
+        ['When they disagreed', 'Lines', 'Model said', 'Book said', 'Went over'],
+        p.disagree.map(d => [gapName(d), d.n.toLocaleString(), pct1(d.model), pct1(d.book), pct1(d.over)]),
+        { caption: 'When the model and the book split, who was closer? Read the last column against the two before it.' })) : null);
+  }
+
+  function replaySection(rp) {
+    if (!rp) return null;
+    const o = rp.overall || {}, m = rp.market || {};
+    const rows = [
+      ['Straight-up winner', rec(o.straight_up), pct1(o.straight_up && o.straight_up.rate), `the closing line ${pct1(m.su)}`],
+      ['Brier score', '', num(o.brier, 3), `the line ${num(m.brier, 3)} · a coin flip is 0.250, lower is better`],
+      ['Against the spread', rec(o.spread), pct1(o.spread && o.spread.rate), 'you need 52.4% to break even at −110'],
+      ['Over / under', rec(o.totals), pct1(o.totals && o.totals.rate), ''],
+      ['Error in predicted margin', '', `${num(o.margin_mae, 1)} pts`, `the closing line missed by ${num(m.margin_mae, 1)}`],
+      ['Error in predicted total', '', `${num(o.total_mae, 1)} pts`, `the closing line missed by ${num(m.total_mae, 1)}`]];
+    const seasons = (rp.by_season || []).length > 1 ? el('div', { class: 'table-wrap', style: 'margin-top:18px' }, buildTable(
+      ['Season', 'Games', 'Straight up', 'Rate', 'ATS', 'O/U', 'Brier', 'Margin err', 'The line'],
+      rp.by_season.map(b => [b.season, b.games, rec(b.straight_up), pct1(b.straight_up.rate), b.spread ? pct1(b.spread.rate) : '–',
+        b.totals ? pct1(b.totals.rate) : '–', num(b.brier, 3), num(b.margin_mae, 2), num(b.market_margin_mae, 2)]),
+      { caption: 'Each season on its own' })) : null;
+    const compare = (rp.comparison || []).length ? el('div', { class: 'table-wrap', style: 'margin-top:18px' }, buildTable(
+      ['', 'Games', 'Straight up', 'Brier', 'Log loss', 'Margin err', 'Total err', 'ATS'],
+      rp.comparison.map(c => [c.label, c.games, pct1(c.su), num(c.brier, 3), num(c.logloss, 3), num(c.mae, 2), num(c.total_mae, 2),
+        c.ats === null || c.ats === undefined ? '–' : pct1(c.ats)]),
+      { caption: 'The same games, two ways (lower is better except straight up and ATS)' })) : null;
+    const cal = (rp.calibration || []).length ? el('div', { class: 'table-wrap', style: 'margin-top:18px' }, buildTable(
+      ['Model gave its pick', 'Games', 'Model said', 'Line said', 'Actually won'],
+      rp.calibration.map(c => [`${pct(c.from)}–${pct(c.to)}`, c.games.toLocaleString(), pct1(c.said), pct1(c.market), pct1(c.actual)]),
+      { caption: 'Are the percentages honest? Close to the last column is what you want.' })) : null;
+    const far = (rp.far_off || []).length ? el('div', { class: 'table-wrap', style: 'margin-top:18px' }, buildTable(
+      ['Model vs the line', 'Games', 'Its side covered', 'Model margin err', 'Line margin err'],
+      rp.far_off.map(f => [f.label, f.games.toLocaleString(), f.covered === null ? '–' : pct1(f.covered), num(f.model_mae, 2), num(f.market_mae, 2)]),
+      { caption: 'The further the model was from the line, the further it was from the result. Disagreeing more has not helped.' })) : null;
+    return el('section', { class: 'card section-gap' }, el('h2', { text: 'How it has done historically' }),
+      el('p', { class: 'lede', text: `The ratings replayed over ${(rp.seasons || []).join(' and ')}: ${(rp.games || 0).toLocaleString()} games, each predicted from only the games before it. `
+        + 'The few settings (how fast old games fade, how hard ratings are pulled to average) were chosen on these same two seasons, so read this as the most the ratings can show, not a forecast.' }),
+      el('div', { class: 'table-wrap' }, buildTable(['', 'Record', 'Rate', 'For comparison'], rows)), seasons, compare, cal, far);
+  }
+
+  function recentSection(s) {
+    if (!(s.recent || []).length) return null;
+    const rows = s.recent.map(r => [
+      el('span', {}, r.game, r.how === 'rebuilt' ? el('span', { class: 'tag', title: 'Played before the board kept its predictions: rebuilt from the ratings as of that morning', text: 'rebuilt' }) : null),
+      dayName(r.date), `${r.pick} ${pct(r.confidence)}`,
+      r.proj_away === null || r.proj_home === null ? '–' : `${num(r.proj_away, 0)}–${num(r.proj_home, 0)}`,
+      `${r.away_score}–${r.home_score}`,
+      verdict(r.winner_ok, r.winner_ok ? 'right' : 'wrong'),
+      r.spread_pick ? verdict(r.spread_ok, r.spread_pick) : '–',
+      r.total_pick ? verdict(r.total_ok, r.total_pick) : '–']);
+    return el('section', { class: 'card section-gap' }, el('h2', { text: 'Recent games' }),
+      el('p', { class: 'legend', text: 'Away score first. Spread and total are the side the model liked against DraftKings’ line, green if it came in.' }),
+      el('div', { class: 'table-wrap' }, buildTable(['Game', 'Day', 'Pick', 'Projected', 'Final', 'Winner', 'Spread', 'Total'], rows)));
+  }
+
+  async function record() {
+    render(tabs('record'), el('div', { class: 'skeleton', 'aria-hidden': 'true' }, el('i'), el('i'), el('i')));
+    let d;
+    try { d = await getJSON('data/nba/record.json'); }
+    catch (e) {
+      render(tabs('record'), el('p', { class: 'notice', text: 'The record has not been published yet. It fills in as the games are played.' }));
+      return;
+    }
+    if (location.hash !== '#/record') return;                 // they went elsewhere while it loaded
+    const s = d.season || {};
+    render(
+      tabs('record'),
+      el('div', { class: 'page-head' }, el('h1', { text: 'Prediction record' }),
+        s.games ? el('span', { class: 'pill', text: `${s.games} graded` }) : null,
+        s.waiting ? el('span', { class: 'pill', text: `${s.waiting} waiting` }) : null,
+        d.generated ? el('span', { class: 'pill', text: `updated ${new Date(d.generated).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}` }) : null),
+      el('p', { class: 'sub', text: 'Every prediction is saved before tip-off and graded afterwards against what happened and against DraftKings, so this is the record and not a retelling.' }),
+      seasonSection(s, d.replay), propsSection(d.props), replaySection(d.replay), recentSection(s), foot(true));
+  }
+
+  let ready = false;
+  function route() {
+    if (!ready) return;
+    const m = /^#\/game\/(.+)$/.exec(location.hash);
+    if (location.hash === '#/record') record();
+    else if (!state.doc) render(tabs('slate'), el('p', { class: 'notice', text: 'The NBA simulations have not been published yet.' }));
+    else if (m) game(decodeURIComponent(m[1]));
+    else slate();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+  window.addEventListener('hashchange', route);
+  load().catch(() => null).then(() => { ready = true; route(); });
+})();
+</script>
+</body>
+</html>
