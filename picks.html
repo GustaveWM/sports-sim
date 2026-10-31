@@ -1,0 +1,1184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Picks</title>
+<style>
+/* The same look as the NBA page, the Lab and the dashboards: hairlines instead of boxes, big radii, numbers doing the work. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #ffffff; --surface-2: #f3f2ee; --ink: #101010; --ink-2: #4f4e4a; --muted: #8b8982;
+  --grid: #e7e6e0; --axis: #cfcdc4; --border: rgba(16, 16, 16, 0.07); --hair: rgba(16, 16, 16, 0.08);
+  --shadow: 0 1px 1px rgba(16, 16, 16, 0.03), 0 12px 32px -14px rgba(16, 16, 16, 0.14);
+  --accent: #17a673; --good: #0ca30c; --good-text: #07700a; --critical: #d23f3f; --warn: #b06f00;
+  --btn-bg: #101010; --btn-ink: #fbfbf9; --radius: 20px; --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #161616; --surface-2: #202020; --ink: #f6f6f3; --ink-2: #c4c3ba; --muted: #8b8982;
+    --grid: #262626; --axis: #38383a; --border: rgba(255, 255, 255, 0.07); --hair: rgba(255, 255, 255, 0.08);
+    --shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 16px 36px -16px rgba(0, 0, 0, 0.7);
+    --accent: #1fb583; --good-text: #35cc3f; --warn: #e5a63f; --btn-bg: #f6f6f3; --btn-ink: #161616;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #161616; --surface-2: #202020; --ink: #f6f6f3; --ink-2: #c4c3ba; --muted: #8b8982;
+  --grid: #262626; --axis: #38383a; --border: rgba(255, 255, 255, 0.07); --hair: rgba(255, 255, 255, 0.08);
+  --shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 16px 36px -16px rgba(0, 0, 0, 0.7);
+  --accent: #1fb583; --good-text: #35cc3f; --warn: #e5a63f; --btn-bg: #f6f6f3; --btn-ink: #161616;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--page); color: var(--ink); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body::before { content: ""; position: fixed; inset: 0 0 auto 0; height: 320px; pointer-events: none; z-index: -1;
+  background: radial-gradient(900px 240px at 50% -90px, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%); }
+.num { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 26px 22px 96px; }
+h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.025em; font-weight: 700; margin: 0; }
+.lede { color: var(--muted); margin: 6px 0 22px; font-size: 13.5px; max-width: 72ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 16px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 22px; }
+.card header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
+.card h2 { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0; flex: 1; }
+.when { color: var(--muted); font-size: 12.5px; }
+button { font: inherit; font-size: 13px; font-weight: 550; border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
+  padding: 6px 15px; background: var(--surface); color: var(--ink); transition: background .15s; }
+button:hover { background: var(--surface-2); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.empty { padding: 22px 0; color: var(--muted); font-size: 13.5px; }
+
+/* a batch: its own header and what it holds */
+.batch + .batch { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--hair); }
+.batch-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; }
+.batch-head b { font-size: 15.5px; font-weight: 680; letter-spacing: -0.01em; }
+.batch-head small { color: var(--muted); font-size: 12.5px; }
+.record { margin-left: auto; font-weight: 700; font-size: 13px; padding: 2px 11px; border-radius: 999px; background: var(--surface-2); font-variant-numeric: tabular-nums; }
+.record.up { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good-text); }
+.record.down { background: color-mix(in srgb, var(--critical) 14%, transparent); color: var(--critical); }
+.sect { margin: 14px 0 2px; color: var(--muted); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.sect small { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: 6px; }
+
+/* a pick */
+.pick { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 4px 14px; padding: 12px 0; border-top: 1px solid var(--hair); }
+.pick:first-of-type { border-top: 0; }
+.pick .chance { display: grid; gap: 5px; justify-items: start; }
+.pick .chance b { font-size: 20px; font-weight: 650; letter-spacing: -0.025em; line-height: 1; }
+.pick .chance i { display: block; width: 100%; height: 3px; border-radius: 999px; background: var(--grid); overflow: hidden; }
+.pick .chance i::after { content: ""; display: block; height: 100%; width: var(--p, 0%); background: var(--accent); border-radius: 999px; animation: grow .8s var(--ease) backwards; transform-origin: left; }
+.pick .what { font-weight: 620; font-size: 15px; line-height: 1.3; }
+.pick .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; line-height: 1.4; }
+.pick .sub b { color: var(--ink-2); font-weight: 600; }
+.pick .dk { text-align: right; line-height: 1.25; }
+.pick .dk b { display: block; font-size: 15px; font-weight: 650; }
+.pick .dk small { color: var(--muted); font-size: 11.5px; }
+.pick.low .what::after { content: "below the usual bar"; margin-left: 8px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); padding: 1px 7px; border-radius: 999px; vertical-align: 2px; white-space: nowrap; }
+
+/* a parlay */
+.parlay { padding: 14px 0 6px; border-top: 1px solid var(--hair); }
+.parlay:first-of-type { border-top: 0; }
+.parlay-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.parlay-head b { font-size: 15px; font-weight: 650; }
+.parlay-head span { color: var(--ink-2); font-size: 13px; }
+.parlay ul { list-style: none; margin: 8px 0 0; padding: 0 0 0 4px; border-left: 2px solid var(--hair); display: grid; gap: 6px; }
+.parlay li { padding-left: 12px; font-size: 13.5px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.parlay li small { color: var(--muted); font-size: 12px; }
+
+/* a graded line */
+.res { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--hair); font-size: 14px; }
+.res:first-of-type { border-top: 0; }
+.res .mark { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; align-self: center; }
+.res.hit .mark { background: color-mix(in srgb, var(--good) 20%, transparent); color: var(--good-text); }
+.res.miss .mark { background: color-mix(in srgb, var(--critical) 16%, transparent); color: var(--critical); }
+.res .p { color: var(--muted); font-size: 12.5px; }
+.res .legs { grid-column: 2 / -1; color: var(--muted); font-size: 12.5px; margin-top: -2px; }
+.note { color: var(--muted); font-size: 12.5px; margin: 14px 0 0; line-height: 1.5; }
+
+/* the sport tabs, and the NBA's picks by game */
+.hidden { display: none !important; }
+.wrap > .seg { margin: 14px 0 0; }
+.wrap > .lede { margin-top: 10px; }
+.wrap .nba-game + .nba-game { margin-top: 20px; padding-top: 4px; border-top: 1px solid var(--hair); }
+.wrap .nba-game .batch-head { margin-top: 14px; }
+.wrap .nba-game .batch-head .nba-all { margin-left: auto; color: var(--ink-2); }
+.wrap .nba-game .batch-head .btn { padding: 3px 10px; font-size: 12.5px; }
+.wrap .nba-game .pick .sub { overflow-wrap: anywhere; }
+.wrap .more-games { margin-top: 14px; }
+.wrap #nba-days { flex-wrap: wrap; row-gap: 2px; margin: 12px 0 14px; }
+.wrap .dayrow { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-items: baseline; width: 100%; text-align: left;
+  border: 0; border-top: 1px solid var(--hair); border-radius: 0; background: none; padding: 9px 0; font-size: 14px; font-weight: 500; }
+.wrap .dayrow:hover { background: none; }
+.wrap .dayrow:hover > span { text-decoration: underline; }
+.wrap .dayrow.on > span { font-weight: 650; }
+.wrap .dayrow small { color: var(--muted); font-size: 12.5px; text-align: right; }
+.wrap .dayrow.static { cursor: default; }
+.wrap .grid > .wide { grid-column: 1 / -1; }
+.wrap details.nflday { border-top: 1px solid var(--hair); }
+.wrap details.nflday > summary { cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-items: baseline; padding: 9px 0; font-size: 14px; list-style: none; }
+.wrap details.nflday > summary::-webkit-details-marker { display: none; }
+.wrap details.nflday > summary:hover > span { text-decoration: underline; }
+.wrap details.nflday[open] > summary > span { font-weight: 650; }
+.wrap details.nflday > summary small { color: var(--muted); font-size: 12.5px; text-align: right; }
+.wrap details.nflday .sect { margin-top: 8px; }
+.wrap .dayrow.static:hover > span { text-decoration: none; }
+.wrap details.earlier > summary { cursor: pointer; color: var(--muted); font-size: 12.5px; padding: 9px 0; border-top: 1px solid var(--hair); }
+.wrap .stack { display: grid; gap: 16px; align-items: start; min-width: 0; }
+.wrap .lead-note { margin: 8px 0 2px; }
+.wrap #leader-days { margin: 10px 0 0; }
+.wrap .nba-game .parlay { margin-top: 4px; padding-top: 12px; }
+.wrap .nba-game .parlay li { font-size: 13px; }
+.wrap .bigp { margin: 2px 0 8px; padding-bottom: 12px; border-bottom: 1px solid var(--hair); }
+.wrap .bigp .parlay { border-top: 0; padding-top: 8px; }
+.wrap .bigp .parlay-head b { font-size: 16px; }
+.wrap .bigp .parlay-head .btn { margin-left: auto; padding: 3px 10px; font-size: 12.5px; }
+.wrap .bigp .parlay ul { gap: 4px; }
+.wrap .bigp li { font-size: 13.5px; }
+.wrap .bigp li.gm { display: block; margin-top: 6px; font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.wrap .bigp li.gm:first-child { margin-top: 0; }
+.wrap .bigp li.gm small { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: 8px; }
+.wrap .bigp li .mk { display: inline-block; min-width: 10px; font-weight: 800; font-size: 12px; margin-right: -2px; }
+.wrap .bigp li .mk.hit { color: var(--good-text); }
+.wrap .bigp li .mk.miss { color: var(--critical); }
+.wrap .bigp li.miss { color: var(--ink-2); }
+/* tracking: Track on each single, each same-game parlay and the day's parlay, and Track all for the day */
+.wrap .trk { display: block; margin: 5px 0 0 auto; padding: 0; border: 0; border-radius: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; font-weight: 400;
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer; box-shadow: none; }
+.wrap .trk:hover { background: none; color: var(--ink); }
+.wrap .trk:disabled { text-decoration: none; cursor: default; color: var(--muted); }
+.wrap .parlay-head .acts { margin-left: auto; display: flex; gap: 6px; }
+.wrap .parlay-head .acts .btn { margin-left: 0; padding: 3px 10px; font-size: 12.5px; }
+.wrap .nba-game .parlay-head > .btn { margin-left: auto; padding: 3px 10px; font-size: 12.5px; }
+.wrap .bigp .note { margin-top: 10px; }
+.wrap details.howto { margin-top: 18px; }
+.wrap details.howto summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.wrap details.howto .note { max-width: 78ch; margin-top: 8px; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+@keyframes grow { from { transform: scaleX(0); } }
+.wrap > * { animation: rise .45s var(--ease) backwards; }
+.grid > .card:nth-child(2) { animation: rise .45s var(--ease) .06s backwards; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (max-width: 720px) { .wrap { padding: 18px 14px 96px; } h1 { font-size: 22px; } .grid { grid-template-columns: minmax(0, 1fr); } .card { padding: 16px 16px; } }
+
+/* >>> calm layer: one quiet look for every page. Plain text where there was a pill, a hairline where there was a box, no colour that
+   is not data. (Source: sports_dashboard/calm_layer.css; python calm.py writes it at the end of each page's own styles.) */
+:root {
+  color-scheme: light;
+  --page: #fafaf8; --surface: #fafaf8; --surface-2: rgba(24, 24, 22, 0.05);
+  --ink: #1b1b19; --ink-2: #53524d; --muted: #8a8983;
+  --grid: rgba(24, 24, 22, 0.09); --axis: rgba(24, 24, 22, 0.22);
+  --border: rgba(24, 24, 22, 0.10); --border-2: rgba(24, 24, 22, 0.20); --hair: rgba(24, 24, 22, 0.10);
+  --shadow: none; --radius: 6px; --radius-sm: 5px;
+  --away: #3f6fae; --home: #c4663c; --accent: #1b1b19; --accent-soft: rgba(24, 24, 22, 0.06); --deemph: rgba(24, 24, 22, 0.2);
+  --good: #2c7a45; --good-text: #2c7a45; --good-soft: rgba(44, 122, 69, 0.10);
+  --bad: #b5453d; --critical: #b5453d; --bad-soft: rgba(181, 69, 61, 0.10);
+  --warn: #946310; --warn-soft: rgba(148, 99, 16, 0.12); --info: #3f6fae; --info-soft: rgba(63, 111, 174, 0.12);
+  --chip: rgba(24, 24, 22, 0.05); --btn-bg: #1b1b19; --btn-ink: #fafaf8; --active: rgba(24, 24, 22, 0.05);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #131312; --surface: #131312; --surface-2: rgba(255, 255, 255, 0.06);
+    --ink: #e8e7e3; --ink-2: #b1b0aa; --muted: #848379;
+    --grid: rgba(255, 255, 255, 0.08); --axis: rgba(255, 255, 255, 0.22);
+    --border: rgba(255, 255, 255, 0.10); --border-2: rgba(255, 255, 255, 0.20); --hair: rgba(255, 255, 255, 0.10);
+    --away: #6b9ddc; --home: #d9805a; --accent: #e8e7e3; --accent-soft: rgba(255, 255, 255, 0.08); --deemph: rgba(255, 255, 255, 0.2);
+    --good: #6dbd88; --good-text: #6dbd88; --good-soft: rgba(109, 189, 136, 0.13);
+    --bad: #e2837c; --critical: #e2837c; --bad-soft: rgba(226, 131, 124, 0.13);
+    --warn: #d8a850; --warn-soft: rgba(216, 168, 80, 0.14); --info: #6b9ddc; --info-soft: rgba(107, 157, 220, 0.14);
+    --chip: rgba(255, 255, 255, 0.07); --btn-bg: #e8e7e3; --btn-ink: #131312; --active: rgba(255, 255, 255, 0.07);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #131312; --surface: #131312; --surface-2: rgba(255, 255, 255, 0.06);
+  --ink: #e8e7e3; --ink-2: #b1b0aa; --muted: #848379;
+  --grid: rgba(255, 255, 255, 0.08); --axis: rgba(255, 255, 255, 0.22);
+  --border: rgba(255, 255, 255, 0.10); --border-2: rgba(255, 255, 255, 0.20); --hair: rgba(255, 255, 255, 0.10);
+  --away: #6b9ddc; --home: #d9805a; --accent: #e8e7e3; --accent-soft: rgba(255, 255, 255, 0.08); --deemph: rgba(255, 255, 255, 0.2);
+  --good: #6dbd88; --good-text: #6dbd88; --good-soft: rgba(109, 189, 136, 0.13);
+  --bad: #e2837c; --critical: #e2837c; --bad-soft: rgba(226, 131, 124, 0.13);
+  --warn: #d8a850; --warn-soft: rgba(216, 168, 80, 0.14); --info: #6b9ddc; --info-soft: rgba(107, 157, 220, 0.14);
+  --chip: rgba(255, 255, 255, 0.07); --btn-bg: #e8e7e3; --btn-ink: #131312; --active: rgba(255, 255, 255, 0.07);
+}
+
+/* ---- page and type */
+html { scroll-behavior: auto; }
+body { background: var(--page); color: var(--ink); font-size: 15px; line-height: 1.5; letter-spacing: 0; text-rendering: auto; }
+body::before { display: none; }
+h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; }
+h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.005em; }
+h3, .cmp h3 { font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.sub, .meta, .lede, .hint, .stamp, .note, .foot, .legend { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+main:focus-visible, #view:focus-visible, [tabindex="-1"]:focus-visible { outline: none; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 5px; border: 2px solid var(--page); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- containers: a hairline above, space around, no box */
+.card, .hero, section.filters, .list, .bonus-sum, .summary, .tk, .check, .parlay, .qb-line, .sb {
+  background: transparent; border: 0; border-radius: 0; box-shadow: none;
+}
+.card, .tk, .parlay { border-top: 1px solid var(--hair); }
+.card { padding: 22px 0 0; }
+.hero { border-top: 1px solid var(--hair); padding-top: 4px; }
+.hero > div { padding: 18px 22px 18px 0; }
+.hero > div + div { border-left: 1px solid var(--hair); padding-left: 22px; }
+section.filters { border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); border-radius: 0; padding: 16px 0 18px; }
+.list { border-top: 1px solid var(--hair); border-radius: 0; }
+.check { border: 1px solid var(--hair); border-radius: 6px; }
+.sb { padding: 24px 0 8px; border-top: 1px solid var(--hair); }
+
+/* ---- plain text where there was a pill; an outline where a mark is needed */
+.pill, .tag, .badge, span.chip, .flag, .l5, .count-pill {
+  background: none; border: 1px solid var(--hair); border-radius: 4px; padding: 0 6px; font-size: 12px; font-weight: 500;
+  letter-spacing: 0; text-transform: none; color: var(--ink-2); line-height: 1.65;
+}
+.page-head .pill, .head .pill, .gc-chips .pill, .card header .pill, .batch-head .pill, .row-between .pill {
+  border: 0; padding: 0; color: var(--muted); font-size: 14px; font-weight: 400;
+}
+.pill.live { background: none; color: var(--muted); }
+.pill.live::before { display: none; }
+.pill.warn, .tag.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: none; }
+.tag.live { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); background: none; }
+.tag.upset { color: var(--ink); border-color: var(--ink-2); background: none; }
+.chip.good, .l5.hot { color: var(--good-text); background: none; border-color: color-mix(in srgb, var(--good) 45%, transparent); }
+.chip.bad, .l5.cold, .flag { color: var(--bad); background: none; border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.chip.warn { color: var(--warn); background: none; border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.chip.info { color: var(--info); background: none; border-color: color-mix(in srgb, var(--info) 45%, transparent); }
+.state, .record { background: none; border: 1px solid var(--hair); border-radius: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0; padding: 0 7px; line-height: 1.7; }
+.state.won, .record.up { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, transparent); background: none; }
+.state.lost, .record.down { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); background: none; }
+.pays { background: none; border: 1px solid var(--hair); border-radius: 4px; padding: 0 7px; font-weight: 600; }
+.pays.value { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, transparent); background: none; }
+.dk { border-radius: 4px; }
+
+/* ---- buttons and fields: square-ish, outlined, no fill */
+.btn, button.ghost, button.more, button[data-copy] {
+  background: transparent; color: var(--ink); border: 1px solid var(--border-2); border-radius: 5px; padding: 6px 12px; font-weight: 500;
+  font-size: 13.5px; box-shadow: none;
+}
+.btn:hover, button.ghost:hover, button.more:hover, button[data-copy]:hover { background: var(--surface-2); }
+details.more { border: 0; background: none; padding: 0; border-radius: 0; box-shadow: none; }
+.btn-icon { width: auto; min-width: 34px; padding: 6px 9px; border-radius: 5px; }
+.btn-primary, .primary, a.primary { background: var(--btn-bg); color: var(--btn-ink); border: 1px solid var(--btn-bg); border-radius: 5px; box-shadow: none; }
+.btn-primary:hover, .primary:hover { opacity: .85; background: var(--btn-bg); }
+.select, select, select.select, .input, input.input, .search, input.search, input[type="number"], input[type="text"], input[type="search"], input[type="date"] {
+  background-color: transparent; color: var(--ink); border: 1px solid var(--border-2); border-radius: 5px; padding: 6px 10px; font-size: 13.5px; box-shadow: none; height: auto;
+}
+select.select { height: 34px; padding: 0 30px 0 10px; }
+input.input { height: 34px; padding: 0 10px; }
+.wf-banner { border-radius: 5px; background: none; border: 1px solid var(--hair); }
+.stepper .btn { border-radius: 5px; }
+.tooltip { border-radius: 6px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28); }
+.sk-click { border-radius: 4px; }
+.input::placeholder, .search::placeholder, input::placeholder { color: var(--muted); }
+.stakebar input { border-radius: 5px; background: transparent; }
+.toast { border-radius: 6px; box-shadow: none; }
+
+/* ---- tabs: words with a line under the one you are on */
+.nav, .tabs, .pills, .seg {
+  display: inline-flex; gap: 22px; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none; width: auto; max-width: 100%;
+}
+.nav a, .tabs a, .pills button, .seg button {
+  background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 6px 0; margin: 0; box-shadow: none;
+  color: var(--muted); font-size: 14px; font-weight: 500; height: auto;
+}
+.nav a:hover, .tabs a:hover, .pills button:hover, .seg button:hover { color: var(--ink); background: none; }
+.nav a[aria-current="page"], .tabs a.on, .pills button[aria-pressed="true"], .seg button[aria-pressed="true"] {
+  background: none; color: var(--ink); border-bottom-color: var(--ink); box-shadow: none; font-weight: 600;
+}
+.seg.small button { padding: 4px 0; font-size: 13px; }
+.seg .badge { margin-left: 5px; line-height: 1.3; vertical-align: 1px; }
+
+/* ---- toggles (a leg type, a position, a quick line): a thin outline, filled when on */
+button.chip, .chips .chip {
+  background: transparent; border: 1px solid var(--hair); border-radius: 5px; padding: 4px 10px; color: var(--ink-2);
+  font-size: 13px; font-weight: 500; box-shadow: none;
+}
+button.chip:hover, .chips .chip:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border-2); }
+button.chip[aria-pressed="true"], .chips .chip[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); border-color: var(--border-2); font-weight: 600; }
+.chip.small { padding: 2px 8px; font-size: 12.5px; }
+button.ghost.on { background: var(--surface-2); color: var(--ink); border-color: var(--ink-2); }
+button.switch { border: 0; background: none; border-radius: 0; padding: 4px 0; }
+button.switch i { background: var(--border-2); }
+button.switch i::after { background: var(--page); }
+button.switch[aria-pressed="true"] i { background: var(--ink); }
+
+/* ---- tables */
+table { font-size: 14px; }
+th { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--hair); }
+td { padding: 11px 10px; border-bottom: 1px solid var(--hair); }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr:last-child td { border-bottom: 0; }
+.scroll:not(.chips) { margin: 0; padding: 0; }
+table.data th { font-size: 12px; text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* ---- figures: a label above, the number under it, no tile */
+.kpi .k, .hero .k, .tile-label, .summary .l, .stat-chip span, .check b {
+  font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted);
+}
+.kpi .v, .hero .v, .tile-value, .summary .n, .money .big { font-size: 24px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
+.kpis { gap: 22px 32px; }
+.kpi .n, .tile-sub, .hero .s { color: var(--muted); font-size: 13px; }
+@media (max-width: 760px) {
+  .hero > div { padding: 16px 0; }
+  .hero > div + div { border-left: 0; padding-left: 0; border-top: 1px solid var(--hair); }
+  .buildbar > .seg { flex: 1 0 100%; }
+}
+.tile { background: none; border: 0; box-shadow: none; padding: 0; border-radius: 0; }
+.statline div { background: none; padding: 0; border-radius: 0; }
+.statline span { text-transform: none; letter-spacing: 0; font-size: 12px; }
+
+/* ---- the slate: a game is a block of text with a line above it */
+.game-card, a.game-card {
+  background: transparent; border: 0; border-top: 1px solid var(--hair); border-radius: 0; box-shadow: none; transform: none;
+  padding: 20px 0 22px; gap: 14px;
+}
+.game-card:hover { transform: none; box-shadow: none; border-color: var(--hair); background: none; }
+.game-card:hover .gc-code, .game-card:hover .team-name { text-decoration: underline; text-underline-offset: 3px; }
+.game-card.is-final, .game-card.is-started { opacity: 1; }
+.game-card.is-final .gc-score { color: var(--muted); }
+.gc-top, .gc-top .venue { color: var(--muted); font-size: 13px; }
+.gc-code { font-weight: 600; font-size: 16px; letter-spacing: 0; }
+.gc-code i, .sb-code i { width: 8px; height: 8px; border-radius: 50%; }
+.gc-name { color: var(--muted); font-size: 13px; }
+.gc-score, .score-big { font-size: 22px; font-weight: 600; letter-spacing: -0.015em; }
+.gc-lines { border-top: 0; padding-top: 2px; font-size: 13.5px; }
+.gc-lines .hd { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.gc-lines .lbl { color: var(--muted); }
+.gc-chips { gap: 4px 16px; }
+.gc-chips .pill { font-size: 13px; }
+.gc-props.on::before { background: var(--muted); }
+.gc-props::before { opacity: .6; }
+.pbar-lbl { font-size: 13px; }
+.pbar-lbl .mkt, .pbar-lbl.dim { color: var(--muted); }
+.team-row .pct { font-weight: 600; }
+.gc-foot { border-top: 1px solid var(--hair); padding-top: 12px; gap: 4px 18px; color: var(--muted); }
+.gc-foot .dot::before { content: none; margin: 0; }
+.gc-foot .badge { border: 0; padding: 0; font-size: 12.5px; font-weight: 400; color: var(--muted); line-height: inherit; }
+.gc-foot .badge.good { color: var(--good-text); }
+.gc-foot .badge.bad { color: var(--bad); }
+
+/* ---- bars: thin, flat, one colour a side */
+.pbar { height: 4px; gap: 2px; }
+.pbar .a, .pbar .h { border-radius: 0; }
+.pbar .mk { height: 12px; top: -4px; width: 1.5px; background: var(--ink); opacity: 1; border-radius: 0; }
+.pbar i, .winbar span { animation: none; }
+.winbar { height: 4px; gap: 2px; }
+.winbar span:first-child, .winbar span:last-child { border-radius: 0; }
+.winbar.lg { height: 6px; }
+.mbar, .usage-bar, .cbar, .rbar, .meter .track, .pick .chance i { border-radius: 0; height: 3px; }
+.mbar i, .usage-bar > i, .cbar i, .meter .fill, .pick .chance i::after { border-radius: 0; background: var(--ink); opacity: .45; animation: none; }
+.cbar { height: 4px; } .cbar b { height: 12px; top: -4px; border-radius: 0; }
+.rbar { height: 4px; } .rbar i { border-radius: 0; }
+
+/* ---- the scoreboard and the comparison under it */
+.sb-score { font-size: 38px; font-weight: 600; letter-spacing: -0.02em; }
+.sb-code { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.sb-win { font-size: 13.5px; color: var(--muted); }
+.sb-mid { color: var(--muted); }
+.cmp-h { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.line-notes { border-top: 1px solid var(--hair); }
+
+/* ---- props: controls without chrome, numbers without badges */
+.controls { gap: 14px; }
+.chips { gap: 4px 16px; }
+.chips.scroll { gap: 4px 22px; }
+.chips.scroll .chip, .ctl-row .chips:not(.ladder) .chip {
+  background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 5px 0; color: var(--muted); font-size: 14px; font-weight: 500;
+}
+.chips.scroll .chip:hover, .ctl-row .chips:not(.ladder) .chip:hover { color: var(--ink); background: none; }
+.chips.scroll .chip[aria-pressed="true"], .ctl-row .chips:not(.ladder) .chip[aria-pressed="true"] {
+  background: none; color: var(--ink); border-bottom-color: var(--ink); font-weight: 600;
+}
+.ladder { gap: 6px; }
+.ctl-label, .field label, .slider-head label { font-size: 12.5px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.ctl-row.filters { border-top: 1px solid var(--hair); }
+.slider-val { font-size: 14px; font-weight: 600; }
+.field .slider, .range input[type="range"] { accent-color: var(--ink); }
+.gap { background: none; border-radius: 0; padding: 0; min-width: 0; font-weight: 500; color: var(--ink-2); box-shadow: none; }
+.gap.soft { background: none; box-shadow: none; color: var(--muted); }
+.gap.far { background: none; color: var(--warn); box-shadow: none; font-weight: 600; }
+.who b { font-weight: 600; }
+.ch b.win { color: var(--ink); }
+.ch b { font-size: 14.5px; }
+a.dklink:hover { background: none; }
+.props-table td { padding-top: 12px; padding-bottom: 12px; }
+
+/* ---- lists and rows */
+.pick .chance b { font-size: 18px; font-weight: 600; }
+.pick.low .what::after { background: none; border: 0; border-radius: 0; padding: 0; margin-left: 10px; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12.5px; vertical-align: baseline; }
+.res .mark { width: auto; height: auto; border-radius: 0; background: none; font-size: 14px; font-weight: 600; place-items: start; }
+.res.hit .mark { background: none; }
+.res.miss .mark { background: none; }
+.parlay h2, .tk h4, .tk header h4, .parlay header h2 { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+#price-out { padding: 18px 0 0 !important; }
+.parlay header { padding: 14px 0 0; }
+.parlay .sum { padding: 6px 0 14px; }
+.parlay .legs { padding: 2px 0 6px; }
+.parlay .fine { padding: 0 0 14px; }
+.parlay .note { padding: 0 0 6px; }
+.parlay .actions { padding: 12px 0 18px; }
+.big { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+.row .add { border-radius: 5px; }
+.row:hover { background: var(--surface-2); }
+.player-row:hover, .qb-line:hover { background-color: var(--surface-2); }
+
+/* ---- the slip stays a panel: it floats over the page */
+.slip { background: var(--page); border: 1px solid var(--border-2); border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); }
+.sk-sheet, .sk-chip, .sk-panel { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); }
+
+/* ---- the hub's navigation: words, no icons, no dots */
+.side { background: var(--page); border-right: 1px solid var(--hair); padding: 22px 14px; gap: 2px; }
+.side .brand { padding: 0 8px 18px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+.side .brand svg, .side .brand small { display: none; }
+.side .sport { padding: 6px 8px; border-radius: 5px; font-weight: 600; font-size: 14px; gap: 0; }
+.side .sport svg, .side .sport .dot, .side .sport .label small { display: none; }
+.side .sport:hover { background: none; }
+.side .sport[aria-current="true"] { background: none; }
+.side .sport[aria-current="true"]::before { display: none; }
+.side .sport[aria-current="true"] .label { border-bottom: 2px solid var(--ink); padding-bottom: 1px; }
+.side .sections { margin: 0 0 10px 8px; padding-left: 0; border-left: 0; }
+.side .sections a { padding: 4px 8px; border-radius: 4px; font-size: 13.5px; color: var(--muted); }
+.side .sections a:hover { background: none; color: var(--ink); }
+.side .sections a[aria-current="true"] { color: var(--ink); font-weight: 600; }
+.side .foot { border-top: 1px solid var(--hair); }
+.side .iconbtn { border-radius: 5px; }
+.side .count { border-radius: 4px; background: var(--ink); color: var(--page); margin-left: 6px; }
+@media (max-width: 720px) {
+  .side { padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--hair); }
+  .side .sport { font-size: 13px; justify-content: center; padding: 10px 2px; text-align: center; }
+  .side .sport[aria-current="true"] .label { border-bottom: 2px solid var(--ink); }
+}
+
+/* ---- no entrance animations: the page is simply there */
+#view > *, .wrap > *, .grid-games > .game-card, .games > .game-card, .results > .parlay, .tickets > *, .skeleton i, .pick .chance i::after { animation: none !important; }
+*, *::before, *::after { transition: none !important; }
+.skeleton i { background: var(--surface-2); border: 0; border-radius: 0; }
+/* <<< calm layer */
+</style>
+<script>if (window.self !== window.top) document.documentElement.classList.add('embedded');</script>
+</head>
+<body>
+<div class="wrap">
+  <h1>Picks</h1>
+  <div class="seg" id="tabs" role="tablist" aria-label="Sport">
+    <button data-tab="nfl" aria-pressed="true">NFL</button><button data-tab="nba" aria-pressed="false">NBA</button>
+  </div>
+  <p class="lede" id="lede-nfl">The NFL picks the daily run makes before kickoff, and how they've done, ready to paste into a group
+    chat. Chances are the model's; fair odds are what those chances are worth with no book margin, so a leg is only
+    worth playing where the book pays more. On a day with two or more games there is also one big parlay across them, the likeliest leg
+    of each game (the likeliest two on a day of four games or fewer): a long shot more than a pick.</p>
+  <p class="lede hidden" id="lede-nba">For every NBA game: four singles, a same-game parlay and the two likeliest PRA leaders, chosen the way
+    the NFL's picks are, and for the whole day one big parlay with one to three legs from each game (twelve at most). Each day has a tab: a game's picks stay up on its day and turn into its results after it, and DraftKings posts
+    player props on game day, so tomorrow's games fill in that morning. A single's chance is DraftKings' price with its margin taken
+    out (on the NBA props graded so far that has predicted better than the model); the model's own figure sits beside it.</p>
+  <div class="grid" id="pane-nfl">
+    <section class="card">
+      <header><h2>Latest picks</h2><span class="when" id="when-picks"></span><button data-copy="picks">Copy</button><button class="btn hidden" id="nfl-track">Track all</button></header>
+      <div id="picks"><div class="empty">Loading…</div></div>
+    </section>
+    <section class="card">
+      <header><h2>Latest results</h2><span class="when" id="when-results"></span><button data-copy="results">Copy</button></header>
+      <div id="results"><div class="empty">Loading…</div></div>
+    </section>
+    <section class="card wide" id="nfl-record-card">
+      <header><h2>Record</h2><span class="when" id="nfl-record-note"></span></header>
+      <div id="nfl-record"><div class="empty">Loading…</div></div>
+    </section>
+  </div>
+  <div id="pane-nba" class="hidden">
+    <div class="seg small" id="nba-days" role="tablist" aria-label="Day"></div>
+    <div class="grid">
+      <section class="card">
+        <header><h2>Picks by game</h2><span class="when" id="when-nba"></span><button class="btn" id="nba-copy">Copy all</button><button class="btn hidden" id="nba-track" title="Follow the day's parlay, every same-game parlay and every single in My picks (on the Parlays page); nothing is bet">Track all</button></header>
+        <div id="nba-picks"><div class="empty">Loading…</div></div>
+      </section>
+      <div class="stack">
+        <section class="card" id="leaders-card">
+          <header><h2>PRA leaders</h2><button class="btn" id="leaders-copy">Copy</button></header>
+          <div id="nba-leaders"><div class="empty">Loading…</div></div>
+        </section>
+        <section class="card">
+          <header><h2>How they did</h2><span class="when num" id="nba-record"></span></header>
+          <div id="nba-results"><div class="empty">Loading…</div></div>
+        </section>
+      </div>
+    </div>
+    <details class="howto"><summary>How these are chosen</summary>
+      <p class="note"><b>Singles.</b> A moneyline or a player's over / "N+" line (points, rebounds, assists, threes, the sums of them,
+        a double-double) for a player who plays most of the game (24+ minutes when he plays, in 90%+ of the simulations) and has
+        won that line in at least 6 of his last 10 games (so a big who seldom shoots threes does not get a "1+ threes"; this keeps the
+        list to what a player usually does, it does not make picks land more often), whose
+        DraftKings price makes it 58-72% likely once the book's margin (about 5.5%) is taken out, and where the model agrees: no more
+        than 5 points above the chance in the price (a model far above the book is far more often wrong than right) or 7 below it.
+        Unders, steals and blocks are left out: they turn on a few minutes more or less. Best chance first, at most one line about the
+        game, one leg a player and two of any one market, four a game (fewer when DraftKings has not posted the props yet, which it
+        does on the day).</p>
+      <p class="note"><b>Why the book's chance and not the model's.</b> On the 3,865 NBA prop lines graded so far the book's own chance
+        predicted better than the model's, and giving the model any weight in a mix only made it worse. Where the model was 5+ points
+        above the book the over landed 46% of the time; the model had said 58%. So the number on a pick is what DraftKings' price
+        says, and the model is the second opinion that has to agree. It also means there is no edge claimed: every pick pays less
+        than its chance is worth, by the book's margin.</p>
+      <p class="note"><b>Same-game parlay.</b> The three of the game's twelve likeliest legs that land together most often: their
+        chances multiplied, times how much more often they landed together in the same simulated game than they would if unrelated, so
+        a team's win and its star's points are not treated as unrelated. Fair odds are what that chance is worth with no margin; a
+        book prices a same-game parlay as one bet, so what it would pay is not known here: compare it with the price in your slip.</p>
+      <p class="note"><b>Parlay of the day.</b> One parlay across the day's games, one to three legs from each game and twelve legs at most: the likeliest
+        pick from each game first (the twelve likeliest games when the day has more), then, while there is room, a second and a third leg
+        for the games, each only if the simulation does not have it at odds with the game's other legs. Its chance is the games' chances
+        multiplied, and a game's legs count how often they landed together. With one leg a game DraftKings' price is the legs' prices
+        multiplied ("DK about"); with more from a game the book's price is not known. It is remade at each
+        update until the day's first tip-off, then kept as it was, and lost as soon as one leg is (a player who does not play is dropped
+        from it, as a book would). Every leg adds the book's margin (about 5.5%), so the longer it is the more of its value it gives up:
+        a long shot for fun, not an edge.</p>
+      <p class="note"><b>Tracking.</b> Track on a single, a same-game parlay or the day's parlay, or Track all for the day, puts it in My picks
+        on the Parlays page: each is its own entry there, graded from the box scores and counted, with the chance shown here (DraftKings'
+        price, margin out). It only follows a pick; nothing is bet. A pick already tracked is not added twice.</p>
+      <p class="note"><b>PRA leaders.</b> The share of the simulated games in which a player had the most points + rebounds +
+        assists of anyone in the game (a tie is shared), beside his projected total (the range is the middle 80% of his simulated
+        games), his last five games and DraftKings' PRA line with the model's chance of the over. This one is the model alone and has
+        not been checked against past games yet; "How they did" keeps count.</p>
+      <p class="note">A few days of results say little either way: four singles at 63% each all land about one game in six.</p></details>
+  </div>
+</div>
+<script>
+(() => {
+  const raw = {};
+  const clean = t => t.replace(/^\(copy of this in .*\)\s*$/gm, '').trim();
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
+  const when = iso => { const d = new Date(iso); return Number.isNaN(+d) ? iso : d.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
+
+  /* ---------- the picks file: singles, then parlays, then a note */
+  const SINGLE = /^[•\-–]\s*(.+?):\s*(\d+)%\s*\(([^)]*)\)\s*(?:\[([^\]]*)\])?\s*(?:\(([^)]*)\))?\s*$/u;
+  const LEG = /^[•\-–]\s*(.+?)\s*\((\d+)%(?:,\s*([^)]*))?\)\s*$/u;
+  const PARLAY = /^(.+?):\s*(\d+(?:\.\d+)?)%\s*\(fair\s*([+\-−]?\d+)(?:,\s*DK pays\s*([+\-−]?\d+))?\)\s*$/u;
+
+  function pick(m) {
+    const [, what, p, price, hist, flag] = m;
+    const fair = (/^[+\-−]\d+/.exec(price) || [''])[0];
+    const dk = /DK\s*([+\-−]\d+)/.exec(price);
+    const onDk = /on DK/.test(price);
+    const row = el('div', `pick${flag ? ' low' : ''}`);
+    const chance = el('div', 'chance'); chance.append(el('b', 'num', `${p}%`));
+    const bar = el('i'); bar.style.setProperty('--p', `${Math.min(100, +p)}%`); chance.append(bar);
+    const mid = el('div'); mid.append(el('div', 'what', what));
+    const sub = el('div', 'sub');
+    sub.append(fair ? `fair ${fair.replace('-', '−')}` : '');
+    const h = hist && /past legs at ([^:]+):\s*said (\d+)%,\s*hit (\d+)%,\s*n (\d+)/.exec(hist);
+    if (h) { const b = el('b', null, `${h[3]}%`); sub.append(` · past legs at ${h[1].replace('-', '–')} hit `, b, ` (n ${(+h[4]).toLocaleString()})`); }
+    mid.append(sub);
+    const side = el('div', 'dk');
+    if (dk) { side.append(el('b', 'num', dk[1].replace('-', '−')), el('small', null, 'DraftKings')); }
+    else if (onDk) { side.append(el('b', null, 'on DK'), el('small', null, 'price not in yet')); }
+    row.append(chance, mid, side);
+    return row;
+  }
+
+  function renderPicks(text, box) {
+    const lines = text.split('\n').map(l => l.replace(/\s+$/, ''));
+    let mode = null, parlay = null, any = false;
+    const batch = el('div', 'batch');
+    const title = lines.find(l => /^\p{Extended_Pictographic}/u.test(l.trim()) && /PICKS/i.test(l));
+    if (title) {
+      const h = el('div', 'batch-head'); h.append(el('b', null, title.replace(/^\p{Extended_Pictographic}+\s*/u, '').replace(/\s*\(.*\)\s*$/, '').toLowerCase().replace(/^nfl /, 'NFL ').replace(/(^|\s)(\w)/g, (m0, a, c) => a + c.toUpperCase()).replace(/Nfl/, 'NFL')));
+      const sims = /\(([^)]*simulations[^)]*)\)/.exec(title); if (sims) h.append(el('small', null, sims[1]));
+      batch.append(h);
+    }
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t || t === title?.trim()) continue;
+      if (/^\S+\s+SINGLES/u.test(t) || /^SINGLES/.test(t)) {
+        mode = 'singles'; parlay = null;
+        const s = el('div', 'sect', 'Singles'); const m = /\[([^\]]*)\]/.exec(t); if (m) s.append(el('small', null, m[1]));
+        batch.append(s); continue;
+      }
+      if (/PARLAYS?\b/.test(t) && /^\p{Extended_Pictographic}|^[A-Z\s]+$/u.test(t)) { mode = 'parlays'; parlay = null; batch.append(el('div', 'sect', 'Parlays')); continue; }
+      if (mode === 'singles' && SINGLE.test(t)) { batch.append(pick(SINGLE.exec(t))); any = true; continue; }
+      if (mode === 'parlays') {
+        const m = PARLAY.exec(t);
+        if (m && !/^[•\-–]/.test(t)) {
+          parlay = el('div', 'parlay');
+          const h = el('div', 'parlay-head'); h.append(el('b', null, m[1]), el('span', 'num', `${m[2]}% · fair ${m[3].replace('-', '−')}${m[4] ? ` · DK pays ${m[4].replace('-', '−')}` : ''}`));
+          parlay.append(h, el('ul')); batch.append(parlay); any = true; continue;
+        }
+        const l = LEG.exec(t);
+        if (l && parlay) {
+          const li = el('li'); li.append(l[1], el('small', 'num', `${l[2]}%${l[3] ? ' · ' + l[3] : ''}`));
+          parlay.querySelector('ul').append(li); continue;
+        }
+      }
+      batch.append(el('p', 'note', t));
+    }
+    if (!any) throw new Error('nothing parsed');
+    box.replaceChildren(batch);
+  }
+
+  /* ---------- the results file: a batch per day's picks, each singles then parlays */
+  function renderResults(text, box) {
+    const batches = text.split(/(?=^\p{Extended_Pictographic}+\s*WEEK \d+ RESULTS)/mu).filter(s => s.trim());
+    if (!batches.length) throw new Error('empty');
+    box.replaceChildren();
+    for (const b of batches.reverse()) {                    // the newest first
+      const lines = b.split('\n').map(l => l.trim()).filter(Boolean);
+      const head = /WEEK (\d+) RESULTS(?::\s*picks made (\S+))?/.exec(lines[0] || '');
+      const batch = el('div', 'batch');
+      const h = el('div', 'batch-head');
+      h.append(el('b', null, head ? `Week ${head[1]}` : 'Results'), head && head[2] ? el('small', null, `picks made ${when(head[2])}`) : '');
+      const rec = lines.map(l => /^→\s*(\d+)\s*[-–]\s*(\d+)/.exec(l)).find(Boolean);
+      if (rec) { const r = el('span', `record ${+rec[1] > +rec[2] ? 'up' : +rec[1] < +rec[2] ? 'down' : ''}`.trim(), `${rec[1]}–${rec[2]}`); h.append(r); }
+      batch.append(h);
+      let parlays = false;
+      for (const t of lines.slice(1)) {
+        if (/^→/.test(t)) continue;
+        if (/^SINGLES/.test(t)) { batch.append(el('div', 'sect', 'Singles')); continue; }
+        const m = /^(✅|❌|➖|⏳)\s*(.+)$/u.exec(t);
+        if (!m) { batch.append(el('p', 'note', t)); continue; }
+        const ok = m[1] === '✅', pending = m[1] === '⏳' || m[1] === '➖';
+        const sp = /^(.*?)\s*\((\d+(?:\.\d+)?)%\)\s*(?::\s*(.*))?$/.exec(m[2]);
+        const row = el('div', `res ${pending ? '' : ok ? 'hit' : 'miss'}`.trim());
+        row.append(el('span', 'mark', pending ? '–' : ok ? '✓' : '✕'), el('span', null, sp ? sp[1] : m[2]), el('span', 'p num', sp ? `${sp[2]}%` : ''));
+        if (sp && sp[3]) {
+          if (!parlays) { batch.append(el('div', 'sect', 'Parlays')); parlays = true; }
+          row.append(el('span', 'legs', sp[3].replace(/✅/g, '✓').replace(/❌/g, '✕').replace(/(⏳|➖)\s*/g, '')));
+        }
+        batch.append(row);
+      }
+      box.append(batch);
+    }
+  }
+
+  async function load(id, file, render) {
+    const box = document.getElementById(id);
+    try {
+      const r = await fetch(`picks/${file}`, { cache: 'no-cache' });
+      if (!r.ok) throw new Error(r.status);
+      const text = clean(await r.text());
+      raw[id] = text;
+      if (!text) throw new Error('empty');
+      try { render(text, box); }
+      catch (e) {                                           // a shape the page does not know: show the text as it is
+        const pre = el('pre'); pre.style.cssText = 'white-space:pre-wrap;font:inherit;margin:8px 0 0'; pre.textContent = text; box.replaceChildren(pre);
+      }
+      const stamp = r.headers.get('Last-Modified');
+      if (stamp) document.getElementById(`when-${id}`).textContent = new Date(stamp).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+    } catch (e) {
+      raw[id] = '';
+      box.replaceChildren(el('div', 'empty', 'Nothing yet: the daily run writes these on game days.'));
+    }
+  }
+  document.querySelectorAll('button[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    const text = raw[b.dataset.copy] || '';
+    try { await navigator.clipboard.writeText(text); b.textContent = 'Copied'; }
+    catch (e) { window.prompt('Copy this:', text); }
+    setTimeout(() => { b.textContent = 'Copy'; }, 1800);
+  }));
+  load('picks', 'picks_latest.txt', renderPicks);
+  load('results', 'results_latest.txt', renderResults);
+
+  /* ---------- NBA: for every game four singles, a same-game parlay and the PRA leaders, a day at a time, from data/nba/picks.json
+     (basketball_sim_dash/picks.py writes it with every publish). A game's picks stay on its day and turn into its results there. */
+  const fmtOdds = o => (o > 0 ? `+${o}` : `−${-o}`);
+  const american = p => (p > 0 && p < 1 ? fmtOdds(p >= 0.5 ? -Math.round(100 * p / (1 - p)) : Math.round(100 * (1 - p) / p)) : '–');
+  const pc = p => `${Math.round(100 * p)}%`;
+  const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const shiftDay = (iso, n) => { const d = new Date(`${iso}T12:00:00`); d.setDate(d.getDate() + n); return localDate(d); };
+  const dayName = iso => new Date(`${iso}T12:00:00`).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  const dayLabel = iso => { const t = localDate(); return iso === t ? 'Today' : iso === shiftDay(t, -1) ? 'Yesterday' : iso === shiftDay(t, 1) ? 'Tomorrow' : dayName(iso); };
+  const LINES = ['ML', 'SPREAD', 'TOTAL'];
+  let nba = null;                    // the file
+  let day = null;                    // the day on show
+  const gamesOn = d => (nba ? nba.games : []).filter(e => e.date === d);
+  const isFinal = e => e.state === 'final';
+  const hasStarted = e => e.state !== 'pre' || Date.parse(e.kickoff) <= Date.now();
+  const mark = r => (r === 'won' || r === 'led' ? '✓' : r === 'lost' || r === 'missed' ? '✕' : '–');
+  const markClass = r => (r === 'won' || r === 'led' ? 'hit' : r === 'lost' || r === 'missed' ? 'miss' : '');
+
+  async function copyFrom(btn, text, back) {
+    if (!text) return;
+    try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; }
+    catch (e) { window.prompt('Copy this:', text); }
+    setTimeout(() => { btn.textContent = back; }, 1800);
+  }
+
+  /* ---------- tracking: a pick goes into "My picks" on the Parlays page, the list its Track button fills (localStorage 'sportsSim.tracked'), where
+     it is graded from the box scores and counted. The same legs are never added twice. Nothing is bet: this only follows a pick. */
+  const TRACK_KEY = 'sportsSim.tracked';
+  const LEG_KEYS = ['sport', 'market', 'label', 'p', 'game', 'gid', 'date', 'team', 'pid', 'stat', 'line', 'side', 'book'];
+  const readTracked = () => { try { return JSON.parse(localStorage.getItem(TRACK_KEY)) || []; } catch (e) { return []; } };
+  const trackedSigs = () => new Set(readTracked().map(t => t.sig));
+  const signature = legs => legs.map(l => `${l.sport}:${l.gid}:${l.label}`).sort().join('|');
+  // a pick row (a single, or a leg of a parlay) as the Parlays page's leg; `g` gives the game and day when the row does not carry them
+  function trackLeg(g, l) {
+    const leg = { sport: 'nba', market: l.market, label: l.label, p: l.p, game: l.game || g.game, gid: l.gid || g.gid, date: l.date || g.date, team: l.team,
+                  pid: l.pid, stat: l.stat, line: l.line, side: l.side, book: { name: 'DraftKings', odds: l.odds } };
+    return Object.fromEntries(LEG_KEYS.filter(k => leg[k] !== undefined && leg[k] !== null).map(k => [k, leg[k]]));
+  }
+  const trackRow = (legs, p) => ({ sig: signature(legs), made: new Date().toISOString(), p, legs });
+  // how many of the rows were new (-1 when the browser will not keep them)
+  function addTracked(rows) {
+    const have = trackedSigs(), fresh = [];
+    for (const r of rows) if (!have.has(r.sig) && !fresh.some(f => f.sig === r.sig)) fresh.push(r);
+    if (!fresh.length) return 0;
+    try { localStorage.setItem(TRACK_KEY, JSON.stringify([...fresh, ...readTracked()])); } catch (e) { return -1; }
+    return fresh.length;
+  }
+  // a game's rows: each single on its own, and its same-game parlay; the day's parlay as one
+  const gameRows = e => [...e.picks.map(pk => trackRow([trackLeg(e, pk)], pk.p)),
+                         ...(e.sgp ? [trackRow(e.sgp.legs.map(l => trackLeg(e, l)), e.sgp.p)] : [])];
+  const bigRow = b => trackRow(b.legs.map(l => trackLeg({ date: b.date }, l)), b.p);
+  // a button that tracks rows(); it reads "Tracked ✓" once they all are
+  function trackButton(cls, text, rows) {
+    const b = el('button', cls, text);
+    b.type = 'button';
+    const have = trackedSigs(), r = rows();
+    if (r.length && r.every(x => have.has(x.sig))) { b.textContent = 'Tracked ✓'; b.disabled = true; }
+    b.addEventListener('click', () => {
+      const n = addTracked(rows());
+      b.textContent = n < 0 ? 'Not saved' : 'Tracked ✓';
+      b.disabled = n >= 0;
+    });
+    return b;
+  }
+
+  // One single: DraftKings' chance (margin out), the model's own beside it, how his last five did against the line, DraftKings' price.
+  function nbaPick(pk, e) {
+    const row = el('div', 'pick');
+    const chance = el('div', 'chance'); chance.append(el('b', 'num', pc(pk.p)));
+    const bar = el('i'); bar.style.setProperty('--p', `${Math.min(100, 100 * pk.p)}%`); chance.append(bar);
+    const mid = el('div'); mid.append(el('div', 'what', pk.label));
+    const sub = el('div', 'sub');
+    sub.append(pk.model != null ? `model ${pc(pk.model)}` : '');
+    if (pk.l5) { sub.append(`${pk.model != null ? ' · ' : ''}last ${pk.l5[1]}: `); sub.append(el('b', null, `${pk.l5[0]}/${pk.l5[1]}`)); }
+    if (pk.l10) { sub.append(`${pk.model != null || pk.l5 ? ' · ' : ''}last ${pk.l10[1]}: `); sub.append(el('b', null, `${pk.l10[0]}/${pk.l10[1]}`)); }
+    mid.append(sub);
+    const side = el('div', 'dk'); side.append(el('b', 'num', fmtOdds(pk.odds)), el('small', null, 'DraftKings'));
+    if (e && !hasStarted(e)) side.append(trackButton('trk', 'Track', () => [trackRow([trackLeg(e, pk)], pk.p)]));
+    row.append(chance, mid, side);
+    return row;
+  }
+
+  // The game's same-game parlay: its legs, and how often they all land in the same simulated game.
+  function nbaParlay(s, e) {
+    const box = el('div', 'parlay');
+    const h = el('div', 'parlay-head'); h.append(el('b', null, 'Same-game parlay'), el('span', 'num', `${pc(s.p)} · fair ${fmtOdds(s.fair)}`));
+    if (e && !hasStarted(e)) h.append(trackButton('btn', 'Track', () => [trackRow(s.legs.map(l => trackLeg(e, l)), s.p)]));
+    const ul = el('ul');
+    for (const l of s.legs) { const li = el('li'); li.append(l.label, el('small', 'num', `${pc(l.p)} · DK ${fmtOdds(l.odds)}`)); ul.append(li); }
+    box.append(h, ul);
+    return box;
+  }
+
+  const nbaText = e => [`🏀 NBA ${e.game} (${when(e.kickoff)})`,
+    ...e.picks.map(pk => `• ${pk.label}: ${pc(pk.p)} (DK ${fmtOdds(pk.odds)}${pk.model != null ? `, model ${pc(pk.model)}` : ''})`),
+    ...(e.sgp ? [`Same-game parlay: ${pc(e.sgp.p)} (fair ${fmtOdds(e.sgp.fair)})`,
+                 ...e.sgp.legs.map(l => `   • ${l.label} (${pc(l.p)}, DK ${fmtOdds(l.odds)})`)] : [])].join('\n');
+
+  // A game before it is graded: the picks as they stood at the last update before tip-off.
+  function pregameBlock(e, perGame) {
+    const g = el('div', 'nba-game');
+    const h = el('div', 'batch-head');
+    h.append(el('b', null, e.game), el('small', null, when(e.kickoff)));
+    if (!hasStarted(e)) {
+      const copy = el('button', 'btn', 'Copy');
+      copy.addEventListener('click', () => copyFrom(copy, nbaText(e), 'Copy'));
+      h.append(copy);
+    }
+    g.append(h);
+    for (const pk of e.picks) g.append(nbaPick(pk, e));
+    if (e.sgp) g.append(nbaParlay(e.sgp, e));
+    if (hasStarted(e)) {
+      g.append(el('p', 'note', 'Started: it is graded after the game, at the next update.'));
+    } else if (e.picks.length < perGame && e.picks.some(pk => !LINES.includes(pk.market))) {
+      g.append(el('p', 'note', `Only ${e.picks.length} ${e.picks.length === 1 ? 'leg fits' : 'legs fit'} the rules for this game.`));
+    }
+    return g;
+  }
+
+  // A game after it is graded: each pick with what happened.
+  function gradedBlock(e) {
+    const g = el('div', 'nba-game');
+    const won = e.picks.filter(pk => pk.result === 'won').length, lost = e.picks.filter(pk => pk.result === 'lost').length;
+    const h = el('div', 'batch-head');
+    h.append(el('b', null, e.game), el('small', null, `final ${e.score ? e.score.replace('-', '–') : ''}`));
+    h.append(el('span', `record ${won > lost ? 'up' : won < lost ? 'down' : ''}`.trim(), `${won}–${lost}`));
+    g.append(h);
+    for (const pk of e.picks) {
+      const row = el('div', `res ${markClass(pk.result)}`.trim());
+      const n = pk.actual == null ? null : Math.round(pk.actual * 10) / 10;
+      const said = n == null || pk.market === 'ML' ? '' : pk.market === 'SPREAD' ? ` (${n >= 0 ? 'covered by' : 'missed by'} ${Math.abs(n)})`
+        : pk.market === 'TOTAL' ? ` (${n} combined)` : ` (${n})`;
+      row.append(el('span', 'mark', mark(pk.result)),
+                 el('span', null, pk.label + (pk.result === 'void' ? ' — did not play' : pk.result === 'push' ? ` — push${n == null ? '' : ` (${n === 0 ? 'on the number' : n})`}` : said)),
+                 el('span', 'p num', pc(pk.p)));
+      g.append(row);
+    }
+    if (e.sgp && e.sgp.result) {
+      const row = el('div', `res ${markClass(e.sgp.result)}`.trim());
+      row.append(el('span', 'mark', mark(e.sgp.result)),
+                 el('span', null, `Same-game parlay${e.sgp.result === 'void' ? ' — a player did not play' : ''}`), el('span', 'p num', pc(e.sgp.p)),
+                 el('span', 'legs', e.sgp.legs.map(l => `${mark(l.result)} ${l.label}`).join(', ')));
+      g.append(row);
+    }
+    return g;
+  }
+
+  // The day's one big parlay: the likeliest leg (or two) of each game, kept as it stood before the day's first tip-off.
+  const bigOn = d => ((nba && nba.bigs) || []).find(b => b.date === d) || null;
+  const bigStarted = b => b.legs.some(l => Date.parse(l.kickoff) <= Date.now());
+  const pcSmall = p => (p >= 0.1 ? pc(p) : `${(100 * p).toFixed(p >= 0.01 ? 1 : 2)}%`);
+  const bigText = b => [`🏀 NBA PARLAY OF THE DAY, ${dayName(b.date)}: ${b.n_games} games, ${b.legs.length} legs, ${pcSmall(b.p)} (fair ${fmtOdds(b.fair)}${b.dk ? `, DK about ${fmtOdds(b.dk)}` : ''})`,
+    ...b.legs.map(l => `• ${l.game}: ${l.label} (${pc(l.p)}, DK ${fmtOdds(l.odds)})`)].join('\n');
+
+  function bigBlock(b) {
+    const box = el('div', 'bigp');
+    const parlay = el('div', 'parlay');
+    const settled = ['won', 'lost', 'void'].includes(b.result);
+    const locked = bigStarted(b);
+    const marked = b.legs.some(l => l.result);                // once some legs are graded the others keep the space a mark takes
+    const h = el('div', 'parlay-head');
+    h.append(el('b', null, 'Parlay of the day'),
+             el('span', 'num', `${b.n_games} games, ${b.legs.length} legs · ${pcSmall(b.p)} · fair ${fmtOdds(b.fair)}${b.dk ? ` · DK about ${fmtOdds(b.dk)}` : ''}`));
+    if (settled) {
+      h.append(el('span', `record ${b.result === 'won' ? 'up' : b.result === 'lost' ? 'down' : ''}`.trim(), b.result));
+    } else if (!locked) {
+      const copy = el('button', 'btn', 'Copy');
+      copy.addEventListener('click', () => copyFrom(copy, `${bigText(b)}\n\nA long shot, not an edge: every leg adds the book's margin.`, 'Copy'));
+      const acts = el('span', 'acts');
+      acts.append(copy, trackButton('btn', 'Track', () => [bigRow(b)]));
+      h.append(acts);
+    }
+    const ul = el('ul');
+    let at = null;
+    for (const l of b.legs) {
+      if (l.gid !== at) { at = l.gid; const gm = el('li', 'gm', l.game); gm.append(el('small', null, when(l.kickoff))); ul.append(gm); }
+      const li = el('li', markClass(l.result));
+      if (marked) li.append(el('span', `mk ${markClass(l.result)}`.trim(), l.result ? mark(l.result) : ''));
+      li.append(l.label, el('small', 'num', `${pc(l.p)} · DK ${fmtOdds(l.odds)}${l.result === 'void' ? ' · did not play' : ''}`));
+      ul.append(li);
+    }
+    parlay.append(h, ul);
+    box.append(parlay);
+    box.append(el('p', 'note', (locked ? 'Kept as it stood at the first tip-off; it is lost as soon as one leg is. ' : `Remade at each update until the first tip-off${b.made ? ` (made ${when(b.made)})` : ''}. `)
+      + (b.legs.every(l => LINES.includes(l.market)) ? 'Moneylines only so far: DraftKings posts the player props on game day. ' : '')
+      + 'Every leg adds the book\'s margin, so a long parlay pays well under what its chance is worth: a long shot, not an edge.'));
+    return box;
+  }
+
+  // everything of the day still to be played, as My picks rows: the day's parlay, and each game's same-game parlay and singles
+  function dayRows() {
+    const rows = [], big = bigOn(day);
+    if (big && !bigStarted(big) && !['won', 'lost', 'void'].includes(big.result)) rows.push(bigRow(big));
+    for (const e of gamesOn(day)) if (e.picks.length && !hasStarted(e)) rows.push(...gameRows(e));
+    return rows;
+  }
+
+  function renderNbaPicks() {
+    const box = document.getElementById('nba-picks');
+    box.replaceChildren();
+    const games = gamesOn(day).filter(e => e.picks.length);
+    document.getElementById('nba-copy').classList.toggle('hidden', !games.some(e => !hasStarted(e)));
+    const all = document.getElementById('nba-track'), rows = dayRows(), have = trackedSigs(), todo = rows.filter(r => !have.has(r.sig)).length;
+    all.classList.toggle('hidden', !rows.length);
+    all.textContent = todo ? 'Track all' : 'All tracked ✓';
+    all.disabled = !todo;
+    if (!games.length) {
+      box.append(el('div', 'empty', day ? 'No picks for this day yet: DraftKings posts a game\'s props on its own day, usually overnight or early in the morning, and the picks appear then. The PRA leaders are already here.'
+        : 'No NBA games to pick from right now: the board is written a few times a day.'));
+      return;
+    }
+    const big = bigOn(day);
+    if (big) box.append(bigBlock(big));
+    for (const e of games) box.append(isFinal(e) ? gradedBlock(e) : pregameBlock(e, nba.per_game));
+    if (games.some(e => !hasStarted(e) && !e.picks.some(pk => !LINES.includes(pk.market)))) {
+      box.append(el('p', 'note', day > localDate()
+        ? 'DraftKings posts player props on game day, so for now these games show only a moneyline (and some show nothing): the four singles and the parlay fill in once it does.'
+        : 'DraftKings posts a game\'s player props on its day, usually overnight or early in the morning: games showing only a moneyline fill in then.'));
+    }
+  }
+
+  // One PRA leader: how often he leads his game, his projected total and last five, DraftKings' PRA line and the model's chance of the over.
+  function leaderRow(l) {
+    const row = el('div', 'pick');
+    const chance = el('div', 'chance'); chance.append(el('b', 'num', l.lead != null ? pc(l.lead) : String(l.proj)));
+    if (l.lead != null) { const bar = el('i'); bar.style.setProperty('--p', `${Math.min(100, 100 * l.lead)}%`); chance.append(bar); }
+    const mid = el('div'); mid.append(el('div', 'what', `${l.name} (${l.team})`));
+    const sub = el('div', 'sub');
+    sub.append('projected ', el('b', 'num', `${l.proj}`), ` PRA (${l.lo}–${l.hi})`);
+    if (l.l5 != null) sub.append(` · last 5 avg ${l.l5}`);
+    if (l.p_play != null && l.p_play < 0.9) sub.append(` · plays in ${pc(l.p_play)} of simulations`);
+    mid.append(sub);
+    const side = el('div', 'dk');
+    if (l.line != null) side.append(el('b', 'num', String(l.line)), el('small', null, `DK line · model over ${pc(l.over)}`));
+    else side.append(el('small', null, 'no DK line yet'));
+    row.append(chance, mid, side);
+    return row;
+  }
+  // The same leader once the game is graded.
+  function leaderResult(l) {
+    const row = el('div', `res ${markClass(l.result)}`.trim());
+    const text = l.result === 'led' ? `${l.name} led the game in PRA with ${l.actual}`
+      : l.result === 'missed' ? `${l.name}: ${l.actual} PRA, the game's top was ${l.top}` : `${l.name} did not play`;
+    row.append(el('span', 'mark', mark(l.result)), el('span', null, text), el('span', 'p num', l.lead != null ? pc(l.lead) : ''));
+    return row;
+  }
+  const leaderText = (e, ls) => [`🏀 ${e.game} (${when(e.kickoff)}): PRA leaders`,
+    ...ls.map(l => `• ${l.name} (${l.team}): projected ${l.proj} PRA${l.lead != null ? `, leads the game ${pc(l.lead)}` : ''}${l.line != null ? `, DK line ${l.line}, over ${pc(l.over)}` : ''}`)].join('\n');
+
+  function renderLeaders() {
+    const box = document.getElementById('nba-leaders');
+    box.replaceChildren();
+    const games = gamesOn(day).filter(e => e.leaders && e.leaders.length);
+    document.getElementById('leaders-copy').classList.toggle('hidden', !games.some(e => !hasStarted(e)));
+    if (!games.length) {
+      box.append(el('div', 'empty', 'No projections for this day: they are written with each publish, for the games still to play.'));
+      return;
+    }
+    box.append(el('p', 'note lead-note', 'The two players the simulation makes likeliest to have the most points + rebounds + assists in each game: the % is how '
+      + 'often that happened in the simulated games, with his projected total (and the middle 80% of his games) beside it.'
+      + (games.some(isFinal) ? ' After the game: ✓ if he led it, ✕ with his total and the game\'s top.' : '')));
+    for (const e of games) {
+      const g = el('div', 'nba-game');
+      const h = el('div', 'batch-head');
+      h.append(el('b', null, e.game), el('small', null, isFinal(e) ? `final ${e.score ? e.score.replace('-', '–') : ''}` : when(e.kickoff)));
+      g.append(h);
+      for (const l of e.leaders) g.append(isFinal(e) && l.result ? leaderResult(l) : leaderRow(l));
+      box.append(g);
+    }
+  }
+
+  // The record over the last days, and a line a day to open that day's games.
+  const outOf = (t, what) => (t && t.won + t.lost ? `${what} ${t.won} of ${t.won + t.lost} (the chances added up to ${t.expected})` : '');
+  const outOfA = (a, what) => (a && a[0] + a[1] ? `${what} ${a[0]} of ${a[0] + a[1]} (the chances added up to ${a[3]})` : '');
+  // one day's tallies, [won, lost, void, expected] each, as the line under its name
+  function dayLine(d) {
+    const of = (a, f) => (a && a[0] + a[1] ? f(a) : '');
+    const bg = bigOn(d.date);
+    const bgText = d.big[0] + d.big[1] ? `day parlay ${d.big[0] ? 'won' : bg && bg.graded ? `lost, ${bg.legs.filter(l => l.result === 'won').length} of ${bg.legs.length} legs` : 'lost'}` : '';
+    return [`singles ${d.singles[0]}–${d.singles[1]}`, of(d.sgp, a => `parlays ${a[0]} of ${a[0] + a[1]}`), of(d.leaders, a => `led ${a[0]} of ${a[0] + a[1]}`), bgText]
+      .filter(Boolean).join(' · ');
+  }
+  // The season so far, then every day since the picks began: the latest ten shown, the rest folded; a day whose games are still on the page opens as its tab.
+  function renderSeason(res) {
+    const s = nba.season;
+    const parts = [outOfA(s.singles, 'singles'), outOfA(s.sgp, 'same-game parlays'), outOfA(s.big, 'parlays of the day'), outOfA(s.leaders, 'PRA leaders who led their game')].filter(Boolean);
+    if (parts.length) res.append(el('p', 'note', `Since ${dayName(s.since)}, ${s.days} ${s.days === 1 ? 'day' : 'days'}: ${parts.join('; ')}. A few games is a small sample.`));
+    const onPage = new Set(nba.games.map(e => e.date));
+    const lines = [...nba.by_day].reverse();
+    const row = d => {
+      const live = onPage.has(d.date);
+      const b = el(live ? 'button' : 'div', `dayrow${d.date === day ? ' on' : ''}${live ? '' : ' static'}`, '');
+      b.append(el('span', null, dayLabel(d.date)), el('small', 'num', dayLine(d)));
+      if (live) b.addEventListener('click', () => { showDay(d.date); document.getElementById('nba-days').scrollIntoView({ block: 'start' }); });
+      return b;
+    };
+    for (const d of lines.slice(0, 10)) res.append(row(d));
+    if (lines.length > 10) {
+      const more = el('details', 'earlier');
+      more.append(el('summary', null, `Earlier days (${lines.length - 10})`));
+      for (const d of lines.slice(10)) more.append(row(d));
+      res.append(more);
+    }
+  }
+  function renderRecord() {
+    const res = document.getElementById('nba-results');
+    res.replaceChildren();
+    const r = nba.record || {};
+    const s0 = nba.season;
+    const singles = s0 ? { won: s0.singles[0], lost: s0.singles[1] } : (r.singles || { won: r.won, lost: r.lost, void: r.void, expected: r.expected });
+    document.getElementById('nba-record').textContent = singles.won || singles.lost ? `singles ${singles.won}–${singles.lost}` : '';
+    const final = nba.games.filter(isFinal);
+    if (!final.length) {
+      res.append(el('div', 'empty', 'Nothing graded yet: a game is graded after it is over, at the next update, and its picks turn into its results on its day.'));
+      return;
+    }
+    if (s0 && Array.isArray(nba.by_day)) { renderSeason(res); return; }
+    const parts = [outOf(singles, 'singles'), outOf(r.sgp, 'same-game parlays'), outOf(r.big, 'parlays of the day'), outOf(r.leaders, 'PRA leaders who led their game')].filter(Boolean);
+    if (parts.length) res.append(el('p', 'note', `Last ${r.days} days: ${parts.join('; ')}. A few games is a small sample.`));
+    const byDay = new Map();
+    for (const e of final) (byDay.get(e.date) || byDay.set(e.date, []).get(e.date)).push(e);
+    for (const d of [...byDay.keys()].sort().reverse()) {
+      const es = byDay.get(d);
+      const n = (list, f) => list.filter(f).length;
+      const picks = es.flatMap(e => e.picks), leads = es.flatMap(e => e.leaders || []);
+      const sgps = es.map(e => e.sgp).filter(Boolean);
+      const bg = bigOn(d);
+      const bgText = bg && (bg.result === 'won' || bg.result === 'lost')
+        ? `day parlay ${bg.result === 'won' ? 'won' : bg.graded ? `lost, ${n(bg.legs, l => l.result === 'won')} of ${bg.legs.length} legs` : 'lost'}` : '';
+      const text = [`singles ${n(picks, p => p.result === 'won')}–${n(picks, p => p.result === 'lost')}`,
+                    sgps.length ? `parlays ${n(sgps, s => s.result === 'won')} of ${n(sgps, s => s.result === 'won' || s.result === 'lost')}` : '',
+                    leads.length ? `led ${n(leads, l => l.result === 'led')} of ${n(leads, l => l.result === 'led' || l.result === 'missed')}` : '',
+                    bgText].filter(Boolean).join(' · ');
+      const b = el('button', `dayrow${d === day ? ' on' : ''}`, '');
+      b.append(el('span', null, dayLabel(d)), el('small', 'num', text));
+      b.addEventListener('click', () => { showDay(d); document.getElementById('nba-days').scrollIntoView({ block: 'start' }); });
+      res.append(b);
+    }
+  }
+
+  // The day tabs: yesterday's results, today, tomorrow and the day after; a day opened from the record is added to them.
+  function renderDays() {
+    const box = document.getElementById('nba-days');
+    box.replaceChildren();
+    let dates = [...new Set(nba.games.map(e => e.date))].sort().filter(d => d >= shiftDay(localDate(), -1));
+    if (day && !dates.includes(day)) dates = [...dates, day].sort();
+    for (const d of dates) {
+      const b = el('button', null, dayLabel(d)); b.title = dayName(d); b.setAttribute('aria-pressed', String(d === day));
+      b.addEventListener('click', () => showDay(d));
+      box.append(b);
+    }
+    box.classList.toggle('hidden', dates.length < 2);
+  }
+  function showDay(d) { day = d; renderDays(); renderNbaPicks(); renderLeaders(); renderRecord(); }
+  function firstDay() {                                      // today, else the next day with games, else the last one there is
+    const t = localDate();
+    const dates = [...new Set(nba.games.map(e => e.date))].sort();
+    return dates.includes(t) ? t : dates.find(d => d > t) || dates[dates.length - 1] || null;
+  }
+
+  function renderNba(doc) {
+    if (!Array.isArray(doc.games)) {                         // a file from before the days were kept
+      doc.games = [...(doc.graded || []).map(e => ({ ...e, state: 'final' })), ...(doc.upcoming || []).map(e => ({ ...e, state: 'pre' }))];
+    }
+    nba = doc;
+    document.getElementById('when-nba').textContent = doc.generated ? `updated ${when(doc.generated)}` : '';
+    if (!day || !doc.games.some(e => e.date === day)) day = firstDay();
+    showDay(day);
+  }
+  fetch('data/nba/picks.json', { cache: 'no-cache' })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(renderNba)
+    .catch(() => {
+      nba = null;
+      document.getElementById('nba-picks').replaceChildren(el('div', 'empty', 'Nothing yet: the NBA picks are written with each publish.'));
+      document.getElementById('nba-leaders').replaceChildren(el('div', 'empty', 'Nothing yet.'));
+      document.getElementById('nba-results').replaceChildren(el('div', 'empty', 'Nothing yet.'));
+    });
+  document.getElementById('nba-copy').addEventListener('click', () => {
+    const b = document.getElementById('nba-copy');
+    const games = nba ? gamesOn(day).filter(e => e.picks.length && !hasStarted(e)) : [];
+    const big = nba ? bigOn(day) : null;
+    const parts = [...(big && !bigStarted(big) ? [bigText(big)] : []), ...games.map(nbaText)];
+    copyFrom(b, parts.length ? parts.join('\n\n') + '\n\nChances are DraftKings\' prices with its margin out: the likeliest legs, not an edge.' : '', 'Copy all');
+  });
+  document.getElementById('nba-track').addEventListener('click', () => {
+    const b = document.getElementById('nba-track');
+    const n = nba ? addTracked(dayRows()) : 0;
+    renderNbaPicks();                                         // every button reads "Tracked ✓" now
+    b.textContent = n < 0 ? 'Not saved' : n === 0 ? 'All tracked ✓' : `Tracked ${n} ✓`;
+  });
+  document.getElementById('leaders-copy').addEventListener('click', () => {
+    const b = document.getElementById('leaders-copy');
+    const games = nba ? gamesOn(day).filter(e => e.leaders && e.leaders.length && !hasStarted(e)) : [];
+    copyFrom(b, games.length ? `🏀 PRA LEADERS, ${dayName(day)}\n\n` + games.map(e => leaderText(e, e.leaders)).join('\n\n') : '', 'Copy');
+  });
+
+  /* ---------- NFL: the season's record, from picks/record.json (football_sim_dash/picks.py --record writes it): every singles and same-game parlay the daily run
+     made, a line a day opening to its legs. Track all follows the latest day still to be played in My picks, like the NBA's. */
+  const NFL_SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
+  function nflKey(name, team) {                              // the key picks.py gives a player: j|gibbs|DET
+    const parts = String(name).replace(/\./g, ' ').replace(/'/g, '').trim().split(/\s+/)
+      .filter(p => p && !NFL_SUFFIXES.has(p.toLowerCase().replace(/^,+|,+$/g, '')));
+    if (parts.length < 2) return `None|${(parts[0] || '').toLowerCase()}|${team}`;
+    return `${parts[0][0].toLowerCase()}|${parts.slice(1).join(' ').toLowerCase()}|${team}`;
+  }
+  // a saved NFL leg as the Parlays page's leg: the game's id is season_week_away_home, a player is found by his name key
+  function nflLeg(d, l) {
+    const [away, home] = l.game.split(' @ ');
+    const leg = { sport: 'nfl', label: l.what, p: l.p, game: l.game, gid: `${d.season}_${String(d.week).padStart(2, '0')}_${away}_${home}`, date: d.date, team: l.team,
+                  book: l.book && l.book.odds != null ? { name: 'DraftKings', odds: l.book.odds } : undefined };
+    const who = nflKey(String(l.what).replace(/ (anytime TD|2\+ passing TDs)$/, ''), l.team);       // ESPN's spelling is in the leg's text (J.K. Dobbins, not J.Dobbins)
+    if (l.kind === 'ML') leg.market = 'ML';
+    else if (l.kind === 'TOTAL') Object.assign(leg, { market: 'TOTAL', line: l.line, side: l.side });
+    else if (l.kind === 'TD') Object.assign(leg, { market: 'TD', stat: 'td', line: 0.5, side: 'over', pkey: who });
+    else if (l.kind === 'QB2') Object.assign(leg, { market: 'PTD', stat: 'pass_td', line: 1.5, side: 'over', pkey: who });
+    return Object.fromEntries(Object.entries(leg).filter(([k, v]) => v !== undefined && v !== null));
+  }
+  let nflRec = null;
+  const nflRows = d => [...d.singles.map(l => trackRow([nflLeg(d, l)], l.p)), ...[...d.sgp, ...d.other].map(par => trackRow(par.legs.map(l => nflLeg(d, l)), par.p))];
+  const nflOpenDay = () => (nflRec ? nflRec.days.filter(d => !d.settled && d.date >= localDate()).pop() || null : null);
+  function paintNflTrack() {
+    const b = document.getElementById('nfl-track'), d = nflOpenDay();
+    b.classList.toggle('hidden', !d);
+    if (!d) return;
+    const have = trackedSigs(), todo = nflRows(d).filter(r => !have.has(r.sig)).length;
+    b.textContent = todo ? 'Track all' : 'All tracked ✓';
+    b.disabled = !todo;
+    b.title = `Follow ${dayName(d.date)}'s singles and parlays in My picks (on the Parlays page); nothing is bet`;
+  }
+  document.getElementById('nfl-track').addEventListener('click', () => {
+    const d = nflOpenDay(), b = document.getElementById('nfl-track');
+    if (!d) return;
+    const n = addTracked(nflRows(d));
+    b.textContent = n < 0 ? 'Not saved' : n === 0 ? 'All tracked ✓' : `Tracked ${n} ✓`;
+    b.disabled = n >= 0;
+  });
+
+  const wl = items => { const w = items.filter(x => x.result === 'won').length, l = items.filter(x => x.result === 'lost').length; return [w, l]; };
+  function nflDay(d) {
+    const box = el('details', 'nflday');
+    const [sw, sl] = wl(d.singles), [pw, pl] = wl([...d.sgp, ...d.other]);
+    const text = [d.settled || sw + sl ? `singles ${sw}–${sl}` : '', pw + pl ? `parlays ${pw} of ${pw + pl}` : '', !d.settled && !(sw + sl) ? 'still to play' : ''].filter(Boolean).join(' · ');
+    const sum = el('summary');
+    sum.append(el('span', null, `${dayName(d.date)} · ${d.games.length === 1 ? d.games[0] : `${d.games.length} games`}`), el('small', 'num', text));
+    box.append(sum);
+    const row = (r, what, p, legs) => {
+      const x = el('div', `res ${markClass(r)}`.trim());
+      x.append(el('span', 'mark', mark(r)), el('span', null, what), el('span', 'p num', p == null ? '' : pc(p)));
+      if (legs) x.append(el('span', 'legs', legs.map(l => `${mark(l.result)} ${l.what}`).join(', ')));
+      return x;
+    };
+    const pars = [...d.sgp, ...d.other];
+    if (pars.length) { box.append(el('div', 'sect', 'Parlays')); for (const par of pars) box.append(row(par.result, par.name, par.p, par.legs)); }
+    box.append(el('div', 'sect', 'Singles'));
+    for (const l of d.singles) box.append(row(l.result, l.what, l.p));
+    return box;
+  }
+  function renderNflRecord(rec) {
+    nflRec = rec;
+    const box = document.getElementById('nfl-record');
+    box.replaceChildren();
+    const T = rec.totals, add = (a, t) => [a[0] + t[0], a[1] + t[1], a[2] + t[2]];
+    const both = k => add(T[k].primetime, T[k].slate);
+    const said = (k, what) => {
+      const all = both(k);
+      if (!(all[0] + all[1])) return '';
+      const part = (t, name) => (t[0] + t[1] ? `${name} ${t[0]} of ${t[0] + t[1]}` : '');
+      const split = [part(T[k].primetime, 'one-game days'), part(T[k].slate, 'slates')].filter(Boolean);
+      return `${what} ${all[0]} of ${all[0] + all[1]} (the chances added up to ${Math.round(all[2] * 10) / 10})${split.length > 1 ? `: ${split.join(', ')}` : ''}`;
+    };
+    const parts = [said('sgp', 'Same-game parlays'), said('singles', 'Singles'), said('other', 'Other parlays')].filter(Boolean);
+    document.getElementById('nfl-record-note').textContent = rec.days.length ? `${rec.days.length} days since ${dayName(rec.days[0].date)}` : '';
+    if (!rec.days.length) { box.append(el('div', 'empty', 'Nothing yet: the daily run writes it on game days.')); return; }
+    if (parts.length) box.append(el('p', 'note', `${parts.join('. ')}. A one-game day is Thursday or Monday night; a slate is a day of several games. A few weeks is a small sample.`));
+    for (const d of [...rec.days].reverse()) box.append(nflDay(d));
+    paintNflTrack();
+  }
+  fetch('picks/record.json', { cache: 'no-cache' })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(renderNflRecord)
+    .catch(() => { document.getElementById('nfl-record').replaceChildren(el('div', 'empty', 'Nothing yet: the daily run writes the record on game days.')); });
+
+  /* ---------- the sport tabs: the NFL's two cards, or the NBA's picks by game */
+  function setTab(name) {
+    document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tab === name)));
+    document.getElementById('pane-nfl').classList.toggle('hidden', name !== 'nfl');
+    document.getElementById('pane-nba').classList.toggle('hidden', name !== 'nba');
+    document.getElementById('lede-nfl').classList.toggle('hidden', name !== 'nfl');
+    document.getElementById('lede-nba').classList.toggle('hidden', name !== 'nba');
+    try { localStorage.setItem('picks.tab', name); } catch (e) { /* private window */ }
+  }
+  document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+  let saved = null;
+  try { saved = localStorage.getItem('picks.tab'); } catch (e) { /* private window */ }
+  setTab(saved === 'nfl' || saved === 'nba' ? saved : 'nba');
+})();
+</script>
+</body>
+</html>
