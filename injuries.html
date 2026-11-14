@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Injuries</title>
+<style>
+/* The same look as the other pages: hairlines instead of boxes, numbers doing the work. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #ffffff; --surface-2: #f3f2ee; --ink: #101010; --ink-2: #4f4e4a; --muted: #8b8982;
+  --grid: #e7e6e0; --axis: #cfcdc4; --border: rgba(16, 16, 16, 0.07); --hair: rgba(16, 16, 16, 0.08);
+  --shadow: 0 1px 1px rgba(16, 16, 16, 0.03), 0 12px 32px -14px rgba(16, 16, 16, 0.14);
+  --accent: #17a673; --good: #0ca30c; --good-text: #07700a; --critical: #d23f3f; --warn: #b06f00;
+  --btn-bg: #101010; --btn-ink: #fbfbf9; --radius: 20px; --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #161616; --surface-2: #202020; --ink: #f6f6f3; --ink-2: #c4c3ba; --muted: #8b8982;
+    --grid: #262626; --axis: #38383a; --border: rgba(255, 255, 255, 0.07); --hair: rgba(255, 255, 255, 0.08);
+    --shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 16px 36px -16px rgba(0, 0, 0, 0.7);
+    --accent: #1fb583; --good-text: #35cc3f; --warn: #e5a63f; --btn-bg: #f6f6f3; --btn-ink: #161616;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #161616; --surface-2: #202020; --ink: #f6f6f3; --ink-2: #c4c3ba; --muted: #8b8982;
+  --grid: #262626; --axis: #38383a; --border: rgba(255, 255, 255, 0.07); --hair: rgba(255, 255, 255, 0.08);
+  --shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 16px 36px -16px rgba(0, 0, 0, 0.7);
+  --accent: #1fb583; --good-text: #35cc3f; --warn: #e5a63f; --btn-bg: #f6f6f3; --btn-ink: #161616;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--page); color: var(--ink); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.num { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 26px 22px 96px; }
+h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.025em; font-weight: 700; margin: 0; }
+.lede { color: var(--muted); margin: 8px 0 14px; font-size: 13.5px; max-width: 78ch; }
+.note { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; line-height: 1.5; max-width: 78ch; }
+button { font: inherit; font-size: 13px; font-weight: 550; border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
+  padding: 6px 15px; background: var(--surface); color: var(--ink); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hidden { display: none !important; }
+.empty { padding: 22px 0; color: var(--muted); font-size: 13.5px; }
+
+/* the sport tabs, the filters, and the list */
+.wrap > .seg { margin: 14px 0 0; }
+.wrap .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 4px 0 12px; }
+.wrap .controls .search { flex: 1 1 220px; min-width: 0; max-width: 360px; }
+.wrap .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.wrap .count { color: var(--muted); font-size: 13px; margin: 14px 0 2px; }
+.wrap .inj { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.7fr) 160px; gap: 4px 20px; align-items: start; padding: 12px 0; border-top: 1px solid var(--hair); }
+.wrap .inj .name { font-weight: 620; font-size: 15px; line-height: 1.3; }
+.wrap .inj .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; line-height: 1.4; }
+.wrap .inj .note { margin: 3px 0 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+.wrap .inj.open .note { -webkit-line-clamp: unset; display: block; }
+.wrap .inj .away { text-align: right; line-height: 1.3; }
+.wrap .inj .st { display: block; font-size: 12.5px; font-weight: 600; letter-spacing: 0.01em; }
+.wrap .inj .st.out { color: var(--critical); }
+.wrap .inj .st.maybe { color: var(--warn); }
+.wrap .inj .dur { display: block; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; margin-top: 1px; }
+.wrap .inj .away .sub { margin-top: 1px; }
+.wrap details.howto { margin-top: 24px; }
+.wrap details.howto summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.wrap details.howto .note { margin-top: 8px; }
+@media (max-width: 720px) {
+  .wrap { padding: 18px 14px 96px; }
+  h1 { font-size: 22px; }
+  .wrap .inj { grid-template-columns: minmax(0, 1fr) auto; gap: 3px 14px; }
+  .wrap .inj .what { grid-column: 1 / -1; grid-row: 2; }
+  .wrap .controls .search { flex-basis: 100%; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* >>> calm layer: one quiet look for every page. Plain text where there was a pill, a hairline where there was a box, no colour that
+   is not data. (Source: sports_dashboard/calm_layer.css; python calm.py writes it at the end of each page's own styles.) */
+:root {
+  color-scheme: light;
+  --page: #fafaf8; --surface: #fafaf8; --surface-2: rgba(24, 24, 22, 0.05);
+  --ink: #1b1b19; --ink-2: #53524d; --muted: #8a8983;
+  --grid: rgba(24, 24, 22, 0.09); --axis: rgba(24, 24, 22, 0.22);
+  --border: rgba(24, 24, 22, 0.10); --border-2: rgba(24, 24, 22, 0.20); --hair: rgba(24, 24, 22, 0.10);
+  --shadow: none; --radius: 6px; --radius-sm: 5px;
+  --away: #3f6fae; --home: #c4663c; --accent: #1b1b19; --accent-soft: rgba(24, 24, 22, 0.06); --deemph: rgba(24, 24, 22, 0.2);
+  --good: #2c7a45; --good-text: #2c7a45; --good-soft: rgba(44, 122, 69, 0.10);
+  --bad: #b5453d; --critical: #b5453d; --bad-soft: rgba(181, 69, 61, 0.10);
+  --warn: #946310; --warn-soft: rgba(148, 99, 16, 0.12); --info: #3f6fae; --info-soft: rgba(63, 111, 174, 0.12);
+  --chip: rgba(24, 24, 22, 0.05); --btn-bg: #1b1b19; --btn-ink: #fafaf8; --active: rgba(24, 24, 22, 0.05);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #131312; --surface: #131312; --surface-2: rgba(255, 255, 255, 0.06);
+    --ink: #e8e7e3; --ink-2: #b1b0aa; --muted: #848379;
+    --grid: rgba(255, 255, 255, 0.08); --axis: rgba(255, 255, 255, 0.22);
+    --border: rgba(255, 255, 255, 0.10); --border-2: rgba(255, 255, 255, 0.20); --hair: rgba(255, 255, 255, 0.10);
+    --away: #6b9ddc; --home: #d9805a; --accent: #e8e7e3; --accent-soft: rgba(255, 255, 255, 0.08); --deemph: rgba(255, 255, 255, 0.2);
+    --good: #6dbd88; --good-text: #6dbd88; --good-soft: rgba(109, 189, 136, 0.13);
+    --bad: #e2837c; --critical: #e2837c; --bad-soft: rgba(226, 131, 124, 0.13);
+    --warn: #d8a850; --warn-soft: rgba(216, 168, 80, 0.14); --info: #6b9ddc; --info-soft: rgba(107, 157, 220, 0.14);
+    --chip: rgba(255, 255, 255, 0.07); --btn-bg: #e8e7e3; --btn-ink: #131312; --active: rgba(255, 255, 255, 0.07);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #131312; --surface: #131312; --surface-2: rgba(255, 255, 255, 0.06);
+  --ink: #e8e7e3; --ink-2: #b1b0aa; --muted: #848379;
+  --grid: rgba(255, 255, 255, 0.08); --axis: rgba(255, 255, 255, 0.22);
+  --border: rgba(255, 255, 255, 0.10); --border-2: rgba(255, 255, 255, 0.20); --hair: rgba(255, 255, 255, 0.10);
+  --away: #6b9ddc; --home: #d9805a; --accent: #e8e7e3; --accent-soft: rgba(255, 255, 255, 0.08); --deemph: rgba(255, 255, 255, 0.2);
+  --good: #6dbd88; --good-text: #6dbd88; --good-soft: rgba(109, 189, 136, 0.13);
+  --bad: #e2837c; --critical: #e2837c; --bad-soft: rgba(226, 131, 124, 0.13);
+  --warn: #d8a850; --warn-soft: rgba(216, 168, 80, 0.14); --info: #6b9ddc; --info-soft: rgba(107, 157, 220, 0.14);
+  --chip: rgba(255, 255, 255, 0.07); --btn-bg: #e8e7e3; --btn-ink: #131312; --active: rgba(255, 255, 255, 0.07);
+}
+
+/* ---- page and type */
+html { scroll-behavior: auto; }
+body { background: var(--page); color: var(--ink); font-size: 15px; line-height: 1.5; letter-spacing: 0; text-rendering: auto; }
+body::before { display: none; }
+h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; }
+h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.005em; }
+h3, .cmp h3 { font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.sub, .meta, .lede, .hint, .stamp, .note, .foot, .legend { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+main:focus-visible, #view:focus-visible, [tabindex="-1"]:focus-visible { outline: none; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 5px; border: 2px solid var(--page); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- containers: a hairline above, space around, no box */
+.card, .hero, section.filters, .list, .bonus-sum, .summary, .tk, .check, .parlay, .qb-line, .sb {
+  background: transparent; border: 0; border-radius: 0; box-shadow: none;
+}
+.card, .tk, .parlay { border-top: 1px solid var(--hair); }
+.card { padding: 22px 0 0; }
+.hero { border-top: 1px solid var(--hair); padding-top: 4px; }
+.hero > div { padding: 18px 22px 18px 0; }
+.hero > div + div { border-left: 1px solid var(--hair); padding-left: 22px; }
+section.filters { border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); border-radius: 0; padding: 16px 0 18px; }
+.list { border-top: 1px solid var(--hair); border-radius: 0; }
+.check { border: 1px solid var(--hair); border-radius: 6px; }
+.sb { padding: 24px 0 8px; border-top: 1px solid var(--hair); }
+
+/* ---- plain text where there was a pill; an outline where a mark is needed */
+.pill, .tag, .badge, span.chip, .flag, .l5, .count-pill {
+  background: none; border: 1px solid var(--hair); border-radius: 4px; padding: 0 6px; font-size: 12px; font-weight: 500;
+  letter-spacing: 0; text-transform: none; color: var(--ink-2); line-height: 1.65;
+}
+.page-head .pill, .head .pill, .gc-chips .pill, .card header .pill, .batch-head .pill, .row-between .pill {
+  border: 0; padding: 0; color: var(--muted); font-size: 14px; font-weight: 400;
+}
+.pill.live { background: none; color: var(--muted); }
+.pill.live::before { display: none; }
+.pill.warn, .tag.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: none; }
+.tag.live { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); background: none; }
+.tag.upset { color: var(--ink); border-color: var(--ink-2); background: none; }
+.chip.good, .l5.hot { color: var(--good-text); background: none; border-color: color-mix(in srgb, var(--good) 45%, transparent); }
+.chip.bad, .l5.cold, .flag { color: var(--bad); background: none; border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.chip.warn { color: var(--warn); background: none; border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.chip.info { color: var(--info); background: none; border-color: color-mix(in srgb, var(--info) 45%, transparent); }
+.state, .record { background: none; border: 1px solid var(--hair); border-radius: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0; padding: 0 7px; line-height: 1.7; }
+.state.won, .record.up { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, transparent); background: none; }
+.state.lost, .record.down { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); background: none; }
+.pays { background: none; border: 1px solid var(--hair); border-radius: 4px; padding: 0 7px; font-weight: 600; }
+.pays.value { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, transparent); background: none; }
+.dk { border-radius: 4px; }
+
+/* ---- buttons and fields: square-ish, outlined, no fill */
+.btn, button.ghost, button.more, button[data-copy] {
+  background: transparent; color: var(--ink); border: 1px solid var(--border-2); border-radius: 5px; padding: 6px 12px; font-weight: 500;
+  font-size: 13.5px; box-shadow: none;
+}
+.btn:hover, button.ghost:hover, button.more:hover, button[data-copy]:hover { background: var(--surface-2); }
+details.more { border: 0; background: none; padding: 0; border-radius: 0; box-shadow: none; }
+.btn-icon { width: auto; min-width: 34px; padding: 6px 9px; border-radius: 5px; }
+.btn-primary, .primary, a.primary { background: var(--btn-bg); color: var(--btn-ink); border: 1px solid var(--btn-bg); border-radius: 5px; box-shadow: none; }
+.btn-primary:hover, .primary:hover { opacity: .85; background: var(--btn-bg); }
+.select, select, select.select, .input, input.input, .search, input.search, input[type="number"], input[type="text"], input[type="search"], input[type="date"] {
+  background-color: transparent; color: var(--ink); border: 1px solid var(--border-2); border-radius: 5px; padding: 6px 10px; font-size: 13.5px; box-shadow: none; height: auto;
+}
+select.select { height: 34px; padding: 0 30px 0 10px; }
+input.input { height: 34px; padding: 0 10px; }
+.wf-banner { border-radius: 5px; background: none; border: 1px solid var(--hair); }
+.stepper .btn { border-radius: 5px; }
+.tooltip { border-radius: 6px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28); }
+.sk-click { border-radius: 4px; }
+.input::placeholder, .search::placeholder, input::placeholder { color: var(--muted); }
+.stakebar input { border-radius: 5px; background: transparent; }
+.toast { border-radius: 6px; box-shadow: none; }
+
+/* ---- tabs: words with a line under the one you are on */
+.nav, .tabs, .pills, .seg {
+  display: inline-flex; gap: 22px; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none; width: auto; max-width: 100%;
+}
+.nav a, .tabs a, .pills button, .seg button {
+  background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 6px 0; margin: 0; box-shadow: none;
+  color: var(--muted); font-size: 14px; font-weight: 500; height: auto;
+}
+.nav a:hover, .tabs a:hover, .pills button:hover, .seg button:hover { color: var(--ink); background: none; }
+.nav a[aria-current="page"], .tabs a.on, .pills button[aria-pressed="true"], .seg button[aria-pressed="true"] {
+  background: none; color: var(--ink); border-bottom-color: var(--ink); box-shadow: none; font-weight: 600;
+}
+.seg.small button { padding: 4px 0; font-size: 13px; }
+.seg .badge { margin-left: 5px; line-height: 1.3; vertical-align: 1px; }
+
+/* ---- toggles (a leg type, a position, a quick line): a thin outline, filled when on */
+button.chip, .chips .chip {
+  background: transparent; border: 1px solid var(--hair); border-radius: 5px; padding: 4px 10px; color: var(--ink-2);
+  font-size: 13px; font-weight: 500; box-shadow: none;
+}
+button.chip:hover, .chips .chip:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border-2); }
+button.chip[aria-pressed="true"], .chips .chip[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); border-color: var(--border-2); font-weight: 600; }
+.chip.small { padding: 2px 8px; font-size: 12.5px; }
+button.ghost.on { background: var(--surface-2); color: var(--ink); border-color: var(--ink-2); }
+button.switch { border: 0; background: none; border-radius: 0; padding: 4px 0; }
+button.switch i { background: var(--border-2); }
+button.switch i::after { background: var(--page); }
+button.switch[aria-pressed="true"] i { background: var(--ink); }
+
+/* ---- tables */
+table { font-size: 14px; }
+th { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--hair); }
+td { padding: 11px 10px; border-bottom: 1px solid var(--hair); }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr:last-child td { border-bottom: 0; }
+.scroll:not(.chips) { margin: 0; padding: 0; }
+table.data th { font-size: 12px; text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* ---- figures: a label above, the number under it, no tile */
+.kpi .k, .hero .k, .tile-label, .summary .l, .stat-chip span, .check b {
+  font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted);
+}
+.kpi .v, .hero .v, .tile-value, .summary .n, .money .big { font-size: 24px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
+.kpis { gap: 22px 32px; }
+.kpi .n, .tile-sub, .hero .s { color: var(--muted); font-size: 13px; }
+@media (max-width: 760px) {
+  .hero > div { padding: 16px 0; }
+  .hero > div + div { border-left: 0; padding-left: 0; border-top: 1px solid var(--hair); }
+  .buildbar > .seg { flex: 1 0 100%; }
+}
+.tile { background: none; border: 0; box-shadow: none; padding: 0; border-radius: 0; }
+.statline div { background: none; padding: 0; border-radius: 0; }
+.statline span { text-transform: none; letter-spacing: 0; font-size: 12px; }
+
+/* ---- the slate: a game is a block of text with a line above it */
+.game-card, a.game-card {
+  background: transparent; border: 0; border-top: 1px solid var(--hair); border-radius: 0; box-shadow: none; transform: none;
+  padding: 20px 0 22px; gap: 14px;
+}
+.game-card:hover { transform: none; box-shadow: none; border-color: var(--hair); background: none; }
+.game-card:hover .gc-code, .game-card:hover .team-name { text-decoration: underline; text-underline-offset: 3px; }
+.game-card.is-final, .game-card.is-started { opacity: 1; }
+.game-card.is-final .gc-score { color: var(--muted); }
+.gc-top, .gc-top .venue { color: var(--muted); font-size: 13px; }
+.gc-code { font-weight: 600; font-size: 16px; letter-spacing: 0; }
+.gc-code i, .sb-code i { width: 8px; height: 8px; border-radius: 50%; }
+.gc-name { color: var(--muted); font-size: 13px; }
+.gc-score, .score-big { font-size: 22px; font-weight: 600; letter-spacing: -0.015em; }
+.gc-lines { border-top: 0; padding-top: 2px; font-size: 13.5px; }
+.gc-lines .hd { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.gc-lines .lbl { color: var(--muted); }
+.gc-chips { gap: 4px 16px; }
+.gc-chips .pill { font-size: 13px; }
+.gc-props.on::before { background: var(--muted); }
+.gc-props::before { opacity: .6; }
+.pbar-lbl { font-size: 13px; }
+.pbar-lbl .mkt, .pbar-lbl.dim { color: var(--muted); }
+.team-row .pct { font-weight: 600; }
+.gc-foot { border-top: 1px solid var(--hair); padding-top: 12px; gap: 4px 18px; color: var(--muted); }
+.gc-foot .dot::before { content: none; margin: 0; }
+.gc-foot .badge { border: 0; padding: 0; font-size: 12.5px; font-weight: 400; color: var(--muted); line-height: inherit; }
+.gc-foot .badge.good { color: var(--good-text); }
+.gc-foot .badge.bad { color: var(--bad); }
+
+/* ---- bars: thin, flat, one colour a side */
+.pbar { height: 4px; gap: 2px; }
+.pbar .a, .pbar .h { border-radius: 0; }
+.pbar .mk { height: 12px; top: -4px; width: 1.5px; background: var(--ink); opacity: 1; border-radius: 0; }
+.pbar i, .winbar span { animation: none; }
+.winbar { height: 4px; gap: 2px; }
+.winbar span:first-child, .winbar span:last-child { border-radius: 0; }
+.winbar.lg { height: 6px; }
+.mbar, .usage-bar, .cbar, .rbar, .meter .track, .pick .chance i { border-radius: 0; height: 3px; }
+.mbar i, .usage-bar > i, .cbar i, .meter .fill, .pick .chance i::after { border-radius: 0; background: var(--ink); opacity: .45; animation: none; }
+.cbar { height: 4px; } .cbar b { height: 12px; top: -4px; border-radius: 0; }
+.rbar { height: 4px; } .rbar i { border-radius: 0; }
+
+/* ---- the scoreboard and the comparison under it */
+.sb-score { font-size: 38px; font-weight: 600; letter-spacing: -0.02em; }
+.sb-code { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.sb-win { font-size: 13.5px; color: var(--muted); }
+.sb-mid { color: var(--muted); }
+.cmp-h { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.line-notes { border-top: 1px solid var(--hair); }
+
+/* ---- props: controls without chrome, numbers without badges */
+.controls { gap: 14px; }
+.chips { gap: 4px 16px; }
+.chips.scroll { gap: 4px 22px; }
+.chips.scroll .chip, .ctl-row .chips:not(.ladder) .chip {
+  background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 5px 0; color: var(--muted); font-size: 14px; font-weight: 500;
+}
+.chips.scroll .chip:hover, .ctl-row .chips:not(.ladder) .chip:hover { color: var(--ink); background: none; }
+.chips.scroll .chip[aria-pressed="true"], .ctl-row .chips:not(.ladder) .chip[aria-pressed="true"] {
+  background: none; color: var(--ink); border-bottom-color: var(--ink); font-weight: 600;
+}
+.ladder { gap: 6px; }
+.ctl-label, .field label, .slider-head label { font-size: 12.5px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.ctl-row.filters { border-top: 1px solid var(--hair); }
+.slider-val { font-size: 14px; font-weight: 600; }
+.field .slider, .range input[type="range"] { accent-color: var(--ink); }
+.gap { background: none; border-radius: 0; padding: 0; min-width: 0; font-weight: 500; color: var(--ink-2); box-shadow: none; }
+.gap.soft { background: none; box-shadow: none; color: var(--muted); }
+.gap.far { background: none; color: var(--warn); box-shadow: none; font-weight: 600; }
+.who b { font-weight: 600; }
+.ch b.win { color: var(--ink); }
+.ch b { font-size: 14.5px; }
+a.dklink:hover { background: none; }
+.props-table td { padding-top: 12px; padding-bottom: 12px; }
+
+/* ---- lists and rows */
+.pick .chance b { font-size: 18px; font-weight: 600; }
+.pick.low .what::after { background: none; border: 0; border-radius: 0; padding: 0; margin-left: 10px; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12.5px; vertical-align: baseline; }
+.res .mark { width: auto; height: auto; border-radius: 0; background: none; font-size: 14px; font-weight: 600; place-items: start; }
+.res.hit .mark { background: none; }
+.res.miss .mark { background: none; }
+.parlay h2, .tk h4, .tk header h4, .parlay header h2 { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+#price-out { padding: 18px 0 0 !important; }
+.parlay header { padding: 14px 0 0; }
+.parlay .sum { padding: 6px 0 14px; }
+.parlay .legs { padding: 2px 0 6px; }
+.parlay .fine { padding: 0 0 14px; }
+.parlay .note { padding: 0 0 6px; }
+.parlay .actions { padding: 12px 0 18px; }
+.big { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+.row .add { border-radius: 5px; }
+.row:hover { background: var(--surface-2); }
+.player-row:hover, .qb-line:hover { background-color: var(--surface-2); }
+
+/* ---- the slip stays a panel: it floats over the page */
+.slip { background: var(--page); border: 1px solid var(--border-2); border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); }
+.sk-sheet, .sk-chip, .sk-panel { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); }
+
+/* ---- the hub's navigation: words, no icons, no dots */
+.side { background: var(--page); border-right: 1px solid var(--hair); padding: 22px 14px; gap: 2px; }
+.side .brand { padding: 0 8px 18px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+.side .brand svg, .side .brand small { display: none; }
+.side .sport { padding: 6px 8px; border-radius: 5px; font-weight: 600; font-size: 14px; gap: 0; }
+.side .sport svg, .side .sport .dot, .side .sport .label small { display: none; }
+.side .sport:hover { background: none; }
+.side .sport[aria-current="true"] { background: none; }
+.side .sport[aria-current="true"]::before { display: none; }
+.side .sport[aria-current="true"] .label { border-bottom: 2px solid var(--ink); padding-bottom: 1px; }
+.side .sections { margin: 0 0 10px 8px; padding-left: 0; border-left: 0; }
+.side .sections a { padding: 4px 8px; border-radius: 4px; font-size: 13.5px; color: var(--muted); }
+.side .sections a:hover { background: none; color: var(--ink); }
+.side .sections a[aria-current="true"] { color: var(--ink); font-weight: 600; }
+.side .foot { border-top: 1px solid var(--hair); }
+.side .iconbtn { border-radius: 5px; }
+.side .count { border-radius: 4px; background: var(--ink); color: var(--page); margin-left: 6px; }
+@media (max-width: 720px) {
+  .side { padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--hair); }
+  .side .sport { font-size: 13px; justify-content: center; padding: 10px 2px; text-align: center; }
+  .side .sport[aria-current="true"] .label { border-bottom: 2px solid var(--ink); }
+}
+
+/* ---- no entrance animations: the page is simply there */
+#view > *, .wrap > *, .grid-games > .game-card, .games > .game-card, .results > .parlay, .tickets > *, .skeleton i, .pick .chance i::after { animation: none !important; }
+*, *::before, *::after { transition: none !important; }
+.skeleton i { background: var(--surface-2); border: 0; border-radius: 0; }
+/* <<< calm layer */
+</style>
+<script>if (window.self !== window.top) document.documentElement.classList.add('embedded');</script>
+</head>
+<body>
+<div class="wrap">
+  <h1>Injuries</h1>
+  <div class="seg" id="tabs" role="tablist" aria-label="Sport">
+    <button data-tab="nfl" aria-pressed="true">NFL</button><button data-tab="nba" aria-pressed="false">NBA</button>
+  </div>
+  <p class="lede" id="lede"></p>
+  <div class="controls">
+    <input class="search" id="q" type="search" placeholder="Player or team" aria-label="Search players or teams" autocomplete="off">
+    <select class="select" id="team" aria-label="Team"><option value="">All teams</option></select>
+    <select class="select" id="sort" aria-label="Sort by">
+      <option value="role">Key players first</option>
+      <option value="soon">Back soonest</option>
+      <option value="long">Out longest</option>
+      <option value="team">Team</option>
+      <option value="name">Name</option>
+    </select>
+  </div>
+  <div class="chips" id="status" role="group" aria-label="Show">
+    <button class="chip" data-s="all" aria-pressed="true">All</button>
+    <button class="chip" data-s="out" aria-pressed="false">Out</button>
+    <button class="chip" data-s="ros" aria-pressed="false">Out for the season (ROS)</button>
+    <button class="chip" data-s="maybe" aria-pressed="false" id="chip-maybe">Questionable</button>
+  </div>
+  <div class="count" id="count"></div>
+  <div id="list"><div class="empty">Loading…</div></div>
+  <details class="howto"><summary>How the simulations use this list</summary>
+    <p class="note" id="howto-nfl"><b>NFL.</b> A player ESPN lists as Out, Doubtful or on injured reserve is left out of that week's simulation and his carries and
+      targets go to his teammates; Questionable players stay in. The team ratings move a little for missing defenders (about half the size the
+      numbers suggest, because the rest did not hold up when tested on a second season); a missing offensive player is handled by the
+      simulation, not by the ratings. The picks and parlays read the list when they are made.</p>
+    <p class="note" id="howto-nba"><b>NBA.</b> A player ESPN lists as Out is left out of the simulation; Day-to-day plays in about 60% of the simulated games
+      (Questionable 55%, Doubtful 10%, Probable 90%), and his minutes go to whoever plays. The team ratings do not change for who is missing, so
+      a game line with a star out can be off: DraftKings' price knows, and the NBA picks use DraftKings' chance and only ask the model to agree.</p>
+    <p class="note">Only as fresh as the last update (7, 8, noon, 4, 5 and 8 o'clock, Sunday to Friday): a player ruled out after it is not in. Return dates are
+      ESPN's estimates and move; ROS is ESPN's own flag, a return after the last regular-season game, or a note saying so.</p>
+  </details>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
+  const stamp = iso => { const d = new Date(iso); return Number.isNaN(+d) ? '' : d.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
+  const fmtDate = iso => new Date(`${iso}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const fmtDay = iso => new Date(`${iso}T12:00:00`).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  const daysUntil = iso => { const a = new Date(`${iso}T12:00:00`), b = new Date(); b.setHours(12, 0, 0, 0); return Math.round((a - b) / 864e5); };
+  const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : '');
+  const OUTISH = new Set(['Out', 'IR', 'Suspended', 'PUP', 'NFI']);                  // not playing, as against a call on the day
+  const LEDE = {
+    nfl: 'Everyone ESPN lists as hurt in the NFL: out, on injured reserve, or questionable for this week. ROS means out for the rest of the season. Return dates are ESPN\'s estimates and move.',
+    nba: 'Everyone ESPN lists as out or day-to-day in the NBA. ROS means out for the rest of the season. Return dates are ESPN\'s estimates and move.',
+  };
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private window */ } },
+  };
+  const docs = {};                                           // the file for each sport, once fetched
+  let sport = 'nfl', show = 'all';
+
+  // How long he is out, in words, from ESPN's estimate and today's date: the label, a line under it, and a number to sort by.
+  function when(p) {
+    if (p.ros) return { label: 'ROS', sub: 'rest of the season', key: 1e6 };
+    if (!p.return) return { label: '–', sub: 'no return date', key: 5e5 };
+    const n = daysUntil(p.return);
+    if (!OUTISH.has(p.status) && n <= 7) {                   // a call on a game: the NFL's is this week's, the NBA's tonight's or tomorrow's
+      const label = sport === 'nfl' ? 'This week' : n <= 0 ? 'Today' : n === 1 ? 'Tomorrow' : fmtDay(p.return);
+      return { label, sub: p.status === 'Doubtful' ? 'unlikely to play' : 'game-time call', key: Math.max(n, 0) };
+    }
+    if (n <= 0) return { label: 'Any day', sub: `ESPN had him back ${fmtDate(p.return)}`, key: 0 };
+    const label = n < 7 ? `~${n} day${n === 1 ? '' : 's'}` : n < 84 ? `~${Math.round(n / 7)} wks` : `~${Math.round(n / 30)} mos`;
+    return { label, sub: `back ~${fmtDate(p.return)}`, key: n };
+  }
+  const roleValue = p => (sport === 'nba' ? (p.role && p.role.mpg) : (p.role && p.role.snaps != null ? 100 * p.role.snaps : null));
+  const KEY = { QB: 300, RB: 150, WR: 150, TE: 150, FB: 150 };      // the NFL's lines mostly play every snap: the ones who touch the ball come first
+  const keyValue = p => (roleValue(p) ?? -1) + (sport === 'nfl' ? (KEY[p.pos] || 0) : 0);
+  const roleText = p => {
+    const v = roleValue(p);
+    if (v == null) return '';
+    return sport === 'nba' ? `${Math.round(v)} min a game` : `${Math.round(v)}% of snaps`;
+  };
+
+  function row(p) {
+    const r = el('div', 'inj');
+    const who = el('div');
+    who.append(el('div', 'name', p.name), el('div', 'sub', [p.team, p.pos, roleText(p)].filter(Boolean).join(' · ')));
+    const what = el('div', 'what');
+    what.append(el('div', null, cap(p.injury) + (p.flag ? ` · ${p.flag}` : '')));
+    if (p.note && p.note.trim().toLowerCase() !== p.status.toLowerCase()) {
+      const n = el('div', 'sub note', p.note);
+      n.title = 'Click to read all of it';
+      n.addEventListener('click', () => r.classList.toggle('open'));
+      what.append(n);
+    }
+    const w = when(p);
+    const away = el('div', 'away');
+    away.append(el('span', `st ${OUTISH.has(p.status) ? 'out' : 'maybe'}`, p.status), el('b', 'dur num', w.label), el('span', 'sub', w.sub));
+    r.append(who, what, away);
+    return r;
+  }
+
+  const SORTS = {
+    role: (a, b) => keyValue(b) - keyValue(a) || a.name.localeCompare(b.name),
+    soon: (a, b) => when(a).key - when(b).key || keyValue(b) - keyValue(a),
+    long: (a, b) => when(b).key - when(a).key || keyValue(b) - keyValue(a),
+    team: (a, b) => a.team.localeCompare(b.team) || keyValue(b) - keyValue(a),
+    name: (a, b) => a.name.localeCompare(b.name),
+  };
+  const passes = p => show === 'all' || (show === 'out' && OUTISH.has(p.status)) || (show === 'ros' && p.ros) || (show === 'maybe' && !OUTISH.has(p.status));
+
+  function render() {
+    const doc = docs[sport];
+    const box = $('list');
+    if (!doc) return;
+    const q = $('q').value.trim().toLowerCase(), team = $('team').value;
+    const all = doc.players;
+    const rows = all.filter(p => passes(p) && (!team || p.team === team)
+      && (!q || `${p.name} ${p.team} ${p.pos || ''} ${p.injury}`.toLowerCase().includes(q))).sort(SORTS[$('sort').value] || SORTS.role);
+    const out = all.filter(p => OUTISH.has(p.status)).length, ros = all.filter(p => p.ros).length;
+    $('count').textContent = `${rows.length === all.length ? `${all.length} players listed` : `${rows.length} of ${all.length}`} · ${out} out · ${ros} out for the season`
+      + (doc.generated ? ` · updated ${stamp(doc.generated)}` : '');
+    box.replaceChildren();
+    if (!rows.length) { box.append(el('div', 'empty', 'Nobody matches that.')); return; }
+    for (const p of rows) box.append(row(p));
+  }
+
+  function fillTeams() {
+    const sel = $('team'), keep = sel.value;
+    const teams = [...new Set((docs[sport] ? docs[sport].players : []).map(p => p.team))].sort();
+    sel.replaceChildren(el('option', null, 'All teams'));
+    sel.firstChild.value = '';
+    for (const t of teams) { const o = el('option', null, t); o.value = t; sel.append(o); }
+    sel.value = teams.includes(keep) ? keep : '';
+  }
+
+  async function setSport(name) {
+    sport = name;
+    store.set('injuries.sport', name);
+    document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tab === name)));
+    $('lede').textContent = LEDE[name];
+    $('chip-maybe').textContent = name === 'nba' ? 'Day-to-day' : 'Questionable';
+    $('howto-nfl').classList.toggle('hidden', name !== 'nfl');
+    $('howto-nba').classList.toggle('hidden', name !== 'nba');
+    if (!docs[name]) {
+      $('list').replaceChildren(el('div', 'empty', 'Loading…'));
+      try {
+        const r = await fetch(`data/${name}/injuries.json`, { cache: 'no-cache' });
+        if (!r.ok) throw new Error(r.status);
+        docs[name] = await r.json();
+      } catch (e) {
+        if (sport === name) { $('count').textContent = ''; $('list').replaceChildren(el('div', 'empty', 'Nothing yet: the injury list is written with each update.')); }
+        return;
+      }
+    }
+    if (sport !== name) return;                              // the other tab was clicked while this loaded
+    fillTeams();
+    render();
+  }
+
+  document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => setSport(b.dataset.tab)));
+  document.querySelectorAll('#status .chip').forEach(b => b.addEventListener('click', () => {
+    show = b.dataset.s;
+    document.querySelectorAll('#status .chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+    render();
+  }));
+  $('q').addEventListener('input', render);
+  $('team').addEventListener('change', render);
+  $('sort').addEventListener('change', () => { store.set('injuries.sort', $('sort').value); render(); });
+  const saved = store.get('injuries.sort');
+  if (saved && SORTS[saved]) $('sort').value = saved;
+  // The hub opens this page on a sport with a hash (#nfl, #nba); on its own it remembers the last one.
+  const fromHash = () => { const h = location.hash.replace('#', ''); return h === 'nfl' || h === 'nba' ? h : null; };
+  window.addEventListener('hashchange', () => { const h = fromHash(); if (h && h !== sport) setSport(h); });
+  setSport(fromHash() || (store.get('injuries.sport') === 'nba' ? 'nba' : 'nfl'));
+})();
+</script>
+</body>
+</html>
